@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Precificador Mercado Livre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f3ee; --surface:#ffffff; --surface-2:#faf9f5; --line:#e2dfd6; --line-2:#cfcbbf;
+  --ink:#191a1c; --ink-2:#585b63; --ink-3:#8b8e95;
+  --accent:#1c4fa3; --accent-ink:#ffffff; --accent-soft:#e6eefb;
+  --good:#0a7d3a; --good-soft:#e3f4e8; --warn:#b26a00; --warn-soft:#fdf1dc; --bad:#c22f2f; --bad-soft:#fbe5e5;
+  --s-produto:#2a78d6; --s-comissao:#eb6834; --s-logistica:#1baf7a; --s-imposto:#eda100; --s-outros:#e87ba4; --s-lucro:#008300;
+  --grid:#e1e0d9; --axis:#c3c2b7;
+  --shadow:0 1px 2px rgba(25,26,28,.06),0 8px 24px -12px rgba(25,26,28,.18);
+  --radius:10px;
+  --font-ui:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-display:"Bricolage Grotesque","IBM Plex Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#131416; --surface:#1c1d20; --surface-2:#232428; --line:#2f3035; --line-2:#3d3e44;
+    --ink:#f2f2ef; --ink-2:#b7b9be; --ink-3:#7f8288;
+    --accent:#6d9ff0; --accent-ink:#0d1a33; --accent-soft:#1d2a44;
+    --good:#4fc57a; --good-soft:#15301f; --warn:#f0b24a; --warn-soft:#3a2a10; --bad:#f07070; --bad-soft:#3d1a1a;
+    --s-produto:#3987e5; --s-comissao:#d95926; --s-logistica:#199e70; --s-imposto:#c98500; --s-outros:#d55181; --s-lucro:#2e9a2e;
+    --grid:#2c2c2a; --axis:#383835;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#131416; --surface:#1c1d20; --surface-2:#232428; --line:#2f3035; --line-2:#3d3e44;
+  --ink:#f2f2ef; --ink-2:#b7b9be; --ink-3:#7f8288;
+  --accent:#6d9ff0; --accent-ink:#0d1a33; --accent-soft:#1d2a44;
+  --good:#4fc57a; --good-soft:#15301f; --warn:#f0b24a; --warn-soft:#3a2a10; --bad:#f07070; --bad-soft:#3d1a1a;
+  --s-produto:#3987e5; --s-comissao:#d95926; --s-logistica:#199e70; --s-imposto:#c98500; --s-outros:#d55181; --s-lucro:#2e9a2e;
+  --grid:#2c2c2a; --axis:#383835;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:26px;font-weight:700}
+h2{font-size:16px;font-weight:700}
+h3{font-size:13px;font-weight:700;color:var(--ink-2)}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+
+.topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 28px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
+.topbar .sub{color:var(--ink-2);margin-top:4px;max-width:64ch}
+.topbar .actions{display:flex;gap:8px;align-items:center}
+
+.layout{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:22px;padding:22px 28px 60px;max-width:1440px;margin:0 auto}
+@media (max-width:960px){.layout{grid-template-columns:1fr;padding:16px}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.panel-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 18px 10px;border-bottom:1px solid var(--line)}
+.panel-b{padding:16px 18px}
+
+/* form */
+.form{position:sticky;top:16px}
+.fs{display:flex;flex-direction:column;gap:12px}
+.fs + .fs{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:12.5px;font-weight:500;color:var(--ink-2)}
+.field .hint{font-size:11.5px;color:var(--ink-3)}
+.control{display:flex;align-items:center;min-width:0;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);overflow:hidden}
+.control:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.control .pre,.control .suf{padding:0 10px;color:var(--ink-3);font-size:12.5px;background:var(--surface-2);align-self:stretch;display:flex;align-items:center;border-right:1px solid var(--line)}
+.control .suf{border-right:0;border-left:1px solid var(--line)}
+.control input,.control select{flex:1;min-width:0;width:100%;border:0;background:transparent;padding:9px 10px;outline:none;font-variant-numeric:tabular-nums}
+.control input[type=number]{-moz-appearance:textfield}
+.control input::-webkit-outer-spin-button,.control input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.control select{appearance:none;padding-right:28px;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px;background-repeat:no-repeat}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line-2);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:9px 8px;cursor:pointer;font-weight:500;color:var(--ink-2)}
+.seg button + button{border-left:1px solid var(--line-2)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
+.check input{width:16px;height:16px;accent-color:var(--accent)}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:500;color:var(--ink)}
+.btn:hover{background:var(--surface-2)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.sm{padding:5px 9px;font-size:12.5px}
+
+/* results */
+.results{display:flex;flex-direction:column;gap:18px;min-width:0}
+.hero{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:0;overflow:hidden}
+.hero > div{padding:18px 20px;border-right:1px solid var(--line)}
+.hero > div:last-child{border-right:0}
+@media (max-width:1100px){.hero{grid-template-columns:1fr 1fr}.hero > div:nth-child(2){border-right:0}.hero > div:nth-child(1),.hero > div:nth-child(2){border-bottom:1px solid var(--line)}}
+.hero .big{font-family:var(--font-display);font-weight:700;font-size:44px;line-height:1.05;letter-spacing:-.02em;margin-top:6px}
+.hero .mid{font-family:var(--font-display);font-weight:700;font-size:26px;line-height:1.1;margin-top:8px}
+.hero .note{color:var(--ink-2);margin-top:6px;font-size:12.5px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;margin-top:10px}
+.pill.good{background:var(--good-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill svg{width:12px;height:12px}
+
+.stack{display:flex;height:26px;border-radius:6px;overflow:hidden;gap:2px;background:var(--surface)}
+.stack > span{display:block;height:100%;min-width:0;transition:flex .25s ease}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+table{width:100%;border-collapse:collapse}
+.tbl th,.tbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase}
+.tbl td.r,.tbl th.r{text-align:right}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr.total td{font-weight:600;border-top:2px solid var(--line-2)}
+.tbl .sub{color:var(--ink-3);font-size:12px}
+.tbl .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px;vertical-align:middle}
+.tbl td.neg{color:var(--bad)} .tbl td.pos{color:var(--good)}
+.scroll{overflow-x:auto}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:1100px){.grid2{grid-template-columns:1fr}}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:700px){.cards{grid-template-columns:1fr}}
+.card{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--surface-2)}
+.card .v{font-family:var(--font-display);font-weight:700;font-size:22px;margin-top:4px}
+.card .d{font-size:12px;color:var(--ink-2);margin-top:4px}
+.card.target{border-color:var(--accent);background:var(--accent-soft)}
+
+.chart{position:relative;width:100%}
+.chart svg{width:100%;height:auto;display:block}
+.chart .tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-115%);opacity:0;transition:opacity .1s}
+.chart .tip.on{opacity:1}
+
+.sens td.cur{background:var(--accent-soft);font-weight:600}
+.bar-cell{position:relative}
+.bar-cell i{position:absolute;left:0;top:50%;height:6px;transform:translateY(-50%);border-radius:0 3px 3px 0;background:var(--s-lucro);opacity:.9}
+.bar-cell i.neg{background:var(--bad)}
+
+details.params summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;padding:14px 18px}
+details.params summary::-webkit-details-marker{display:none}
+details.params summary::after{content:"Abrir";color:var(--accent);font-weight:600;font-size:12.5px}
+details.params[open] summary::after{content:"Fechar"}
+.ptable td input{width:72px;border:1px solid var(--line-2);border-radius:6px;padding:4px 6px;text-align:right;background:var(--surface);font-variant-numeric:tabular-nums}
+.ptable th.w{white-space:nowrap}
+.params-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);padding:10px 12px;border-radius:0 6px 6px 0;font-size:12.5px;color:var(--ink-2);margin-bottom:14px}
+.footer{padding:0 28px 32px;max-width:1440px;margin:0 auto;color:var(--ink-3);font-size:12px}
+.sr{position:absolute;left:-9999px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <p class="eyebrow">Mercado Livre · Brasil · 2026</p>
+    <h1>Precificador Mercado Livre</h1>
+    <p class="sub">Informe o custo e o preço do item. O painel calcula comissão, custo por unidade, frete, impostos e demais custos, e mostra o lucro líquido por venda.</p>
+  </div>
+  <div class="actions">
+    <button class="btn sm" id="btnReset" type="button">Limpar entradas</button>
+    <button class="btn sm" id="btnTheme" type="button" aria-label="Alternar tema">Tema</button>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- ========== ENTRADAS ========== -->
+  <section class="panel form" aria-labelledby="hEntradas">
+    <div class="panel-h"><h2 id="hEntradas">Item</h2><span class="eyebrow">Entradas</span></div>
+    <div class="panel-b">
+      <div class="fs">
+        <div class="field">
+          <label for="custo">Custo do produto (compra ou produção)</label>
+          <div class="control"><span class="pre">R$</span><input id="custo" type="number" min="0" step="0.01" inputmode="decimal" value="32.00"></div>
+        </div>
+        <div class="field">
+          <label for="preco">Preço de venda no anúncio</label>
+          <div class="control"><span class="pre">R$</span><input id="preco" type="number" min="0" step="0.01" inputmode="decimal" value="89.90"></div>
+          <span class="hint" id="precoHint"></span>
+        </div>
+        <div class="field">
+          <label>Tipo de anúncio</label>
+          <div class="seg" role="group" aria-label="Tipo de anúncio">
+            <button type="button" data-tipo="classico" aria-pressed="true">Clássico</button>
+            <button type="button" data-tipo="premium" aria-pressed="false">Premium</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="comissao">Comissão da categoria</label>
+          <div class="control"><input id="comissao" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="12"><span class="suf">%</span></div>
+          <span class="hint">Clássico 10–14% · Premium 15–19%. Confira a sua categoria em Custos de venda.</span>
+        </div>
+      </div>
+
+      <div class="fs">
+        <h3>Logística</h3>
+        <div class="field">
+          <label for="logistica">Modo de envio</label>
+          <div class="control"><select id="logistica">
+            <option value="me2">Mercado Envios (Correios, Coleta, Agência)</option>
+            <option value="full">Mercado Envios Full</option>
+            <option value="flex">Mercado Envios Flex (entrega própria)</option>
+            <option value="proprio">Envio próprio (ME1)</option>
+          </select></div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="peso">Peso embalado</label>
+            <div class="control"><input id="peso" type="number" min="0" step="10" inputmode="numeric" value="450"><span class="suf">g</span></div>
+          </div>
+          <div class="field">
+            <label for="reputacao">Reputação</label>
+            <div class="control"><select id="reputacao">
+              <option value="verde">Verde / MercadoLíder</option>
+              <option value="amarela">Amarela</option>
+              <option value="laranja">Laranja ou vermelha</option>
+              <option value="nova">Sem reputação</option>
+            </select></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Dimensões da embalagem (peso cubado = C×L×A ÷ 6000)</label>
+          <div class="row3">
+            <div class="control"><input id="dimC" type="number" min="0" step="1" inputmode="numeric" placeholder="C" value="25"><span class="suf">cm</span></div>
+            <div class="control"><input id="dimL" type="number" min="0" step="1" inputmode="numeric" placeholder="L" value="18"><span class="suf">cm</span></div>
+            <div class="control"><input id="dimA" type="number" min="0" step="1" inputmode="numeric" placeholder="A" value="10"><span class="suf">cm</span></div>
+          </div>
+          <span class="hint" id="pesoHint"></span>
+        </div>
+        <div class="field" id="fOwnShip" hidden>
+          <label for="ownShip">Custo real do envio (seu transportador ou entregador)</label>
+          <div class="control"><span class="pre">R$</span><input id="ownShip" type="number" min="0" step="0.01" inputmode="decimal" value="14.00"></div>
+        </div>
+        <div class="field" id="fFull" hidden>
+          <label for="fullFee">Custo Full por unidade (armazenagem, manuseio, coleta)</label>
+          <div class="control"><span class="pre">R$</span><input id="fullFee" type="number" min="0" step="0.01" inputmode="decimal" value="0"></div>
+          <span class="hint">Pegue o valor no relatório do Full. Deixe 0 se não souber.</span>
+        </div>
+        <label class="check" id="fFreteBaixo"><input id="freteBaixo" type="checkbox"> Oferecer frete grátis mesmo abaixo de R$&nbsp;79</label>
+      </div>
+
+      <div class="fs">
+        <h3>Impostos e outros custos</h3>
+        <div class="row2">
+          <div class="field">
+            <label for="imposto">Imposto sobre a venda</label>
+            <div class="control"><input id="imposto" type="number" min="0" max="100" step="0.1" inputmode="decimal" value="6"><span class="suf">%</span></div>
+            <span class="hint">Alíquota do Simples ou carga efetiva.</span>
+          </div>
+          <div class="field">
+            <label for="ads">Ads (ACOS médio)</label>
+            <div class="control"><input id="ads" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="0"><span class="suf">%</span></div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="embalagem">Embalagem</label>
+            <div class="control"><span class="pre">R$</span><input id="embalagem" type="number" min="0" step="0.01" inputmode="decimal" value="1.50"></div>
+          </div>
+          <div class="field">
+            <label for="outros">Outros por pedido</label>
+            <div class="control"><span class="pre">R$</span><input id="outros" type="number" min="0" step="0.01" inputmode="decimal" value="0"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="margemAlvo">Margem líquida desejada</label>
+          <div class="control"><input id="margemAlvo" type="number" min="0" max="95" step="1" inputmode="decimal" value="20"><span class="suf">%</span></div>
+          <span class="hint">Usada para sugerir o preço de venda.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== RESULTADOS ========== -->
+  <section class="results">
+    <div class="panel hero" aria-live="polite">
+      <div>
+        <p class="eyebrow">Lucro líquido por venda</p>
+        <p class="big num" id="hLucro">R$ 0,00</p>
+        <span class="pill good" id="hPill"></span>
+      </div>
+      <div>
+        <p class="eyebrow">Margem líquida</p>
+        <p class="mid num" id="hMargem">0%</p>
+        <p class="note" id="hMargemNote">sobre o preço de venda</p>
+      </div>
+      <div>
+        <p class="eyebrow">Markup sobre o custo</p>
+        <p class="mid num" id="hMarkup">0%</p>
+        <p class="note">lucro ÷ custo do produto</p>
+      </div>
+      <div>
+        <p class="eyebrow">Você recebe do ML</p>
+        <p class="mid num" id="hRepasse">R$ 0,00</p>
+        <p class="note">preço − tarifas do Mercado Livre</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><h2>Para onde vai cada real do preço</h2><span class="eyebrow num" id="stackTotal"></span></div>
+      <div class="panel-b">
+        <div class="stack" id="stack" role="img" aria-label="Composição do preço de venda"></div>
+        <div class="legend" id="legend"></div>
+        <div class="scroll" style="margin-top:14px">
+          <table class="tbl" id="breakdown">
+            <thead><tr><th>Componente</th><th>Como é calculado</th><th class="r">R$</th><th class="r">% do preço</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><h2>Preços de referência</h2></div>
+        <div class="panel-b">
+          <div class="cards">
+            <div class="card"><p class="eyebrow">Ponto de equilíbrio</p><p class="v num" id="cBreakeven">—</p><p class="d">lucro zero: abaixo disso você paga para vender</p></div>
+            <div class="card target"><p class="eyebrow" id="cAlvoLabel">Preço para 20% de margem</p><p class="v num" id="cAlvo">—</p><p class="d" id="cAlvoD">menor preço que atinge a margem desejada</p></div>
+            <div class="card"><p class="eyebrow">Clássico × Premium</p><p class="v num" id="cCompara">—</p><p class="d" id="cComparaD"></p></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h2>Lucro conforme o preço</h2><span class="eyebrow">degrau dos R$ 79</span></div>
+        <div class="panel-b">
+          <div class="chart" id="chart"><div class="tip" id="tip"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><h2>Simulação de preços</h2><span class="eyebrow">−25% a +25% do preço atual</span></div>
+      <div class="panel-b scroll">
+        <table class="tbl sens" id="sens">
+          <thead><tr><th class="r">Preço</th><th class="r">Tarifas ML</th><th class="r">Logística</th><th class="r">Impostos + outros</th><th class="r">Lucro</th><th class="r">Margem</th><th style="width:26%"></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <details class="panel params" id="params">
+      <summary><span><h2 style="display:inline">Tabelas de tarifas</h2> <span class="eyebrow" style="margin-left:10px">editáveis · salvas neste navegador</span></span></summary>
+      <div class="panel-b">
+        <div class="callout">Os valores abaixo são <strong>referências</strong> para 2026. Desde março de 2026 o Mercado Livre cobra um custo por unidade que varia por peso e faixa de preço, e acima de R$&nbsp;79 o frete grátis é obrigatório com desconto por reputação. Confira os valores exatos no <em>Simulador de custos</em> do seu painel e ajuste aqui. As edições ficam salvas neste navegador.</div>
+        <div class="params-grid">
+          <div class="field"><label for="pLimite">Limite do frete grátis obrigatório</label><div class="control"><span class="pre">R$</span><input id="pLimite" type="number" step="0.01" min="0"></div></div>
+          <div class="field"><label for="pMinTabela">Preço mínimo para a tabela por peso</label><div class="control"><span class="pre">R$</span><input id="pMinTabela" type="number" step="0.01" min="0"></div></div>
+          <div class="field"><label for="pRegraBaixo">Abaixo do mínimo: custo fixo de</label><div class="control"><input id="pRegraBaixo" type="number" step="1" min="0" max="100"><span class="suf">% do preço</span></div></div>
+          <div class="field"><label for="pCubagem">Divisor de cubagem</label><div class="control"><input id="pCubagem" type="number" step="100" min="1"><span class="suf">cm³/kg</span></div></div>
+          <div class="field"><label for="pComClassico">Comissão padrão Clássico</label><div class="control"><input id="pComClassico" type="number" step="0.5" min="0"><span class="suf">%</span></div></div>
+          <div class="field"><label for="pComPremium">Comissão padrão Premium</label><div class="control"><input id="pComPremium" type="number" step="0.5" min="0"><span class="suf">%</span></div></div>
+        </div>
+        <h3 style="margin-bottom:8px">Desconto no frete por reputação (acima do limite)</h3>
+        <div class="params-grid">
+          <div class="field"><label for="pDescVerde">Verde / MercadoLíder</label><div class="control"><input id="pDescVerde" type="number" step="1" min="0" max="100"><span class="suf">%</span></div></div>
+          <div class="field"><label for="pDescAmarela">Amarela</label><div class="control"><input id="pDescAmarela" type="number" step="1" min="0" max="100"><span class="suf">%</span></div></div>
+          <div class="field"><label for="pDescLaranja">Laranja ou vermelha</label><div class="control"><input id="pDescLaranja" type="number" step="1" min="0" max="100"><span class="suf">%</span></div></div>
+          <div class="field"><label for="pDescNova">Sem reputação</label><div class="control"><input id="pDescNova" type="number" step="1" min="0" max="100"><span class="suf">%</span></div></div>
+        </div>
+        <h3 style="margin-bottom:8px">Custo logístico por unidade (R$, valor cheio antes do desconto por reputação)</h3>
+        <p class="hint" style="margin-bottom:10px;color:var(--ink-3);font-size:12px">Linhas: peso faturável do pacote. Colunas: faixa de preço do anúncio. Abaixo do limite de frete grátis o valor é o custo por unidade; acima, é o frete que você paga pelo envio grátis.</p>
+        <div class="scroll"><table class="tbl ptable" id="ptable"><thead></thead><tbody></tbody></table></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn sm" id="btnRestore" type="button">Restaurar valores de referência</button>
+        </div>
+      </div>
+    </details>
+  </section>
+</main>
+
+<p class="footer">Comissão por categoria e tabelas de frete/custo por unidade mudam ao longo do ano. Este painel é uma ferramenta de apoio; o valor cobrado de fato aparece no detalhe da venda no Mercado Livre.</p>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- Parâmetros de referência (editáveis) ---------- */
+const PRICE_BANDS = [
+  {key:'b19',  min:19,  max:28.99, label:'19–28,99'},
+  {key:'b29',  min:29,  max:49.99, label:'29–49,99'},
+  {key:'b50',  min:50,  max:78.99, label:'50–78,99'},
+  {key:'b79',  min:79,  max:99.99, label:'79–99,99'},
+  {key:'b100', min:100, max:119.99,label:'100–119,99'},
+  {key:'b120', min:120, max:149.99,label:'120–149,99'},
+  {key:'b150', min:150, max:199.99,label:'150–199,99'},
+  {key:'b200', min:200, max:Infinity,label:'200 ou mais'},
+];
+const WEIGHT_BANDS = [
+  {max:300,  label:'até 300 g'},
+  {max:500,  label:'300 g – 500 g'},
+  {max:1000, label:'500 g – 1 kg'},
+  {max:2000, label:'1 – 2 kg'},
+  {max:3000, label:'2 – 3 kg'},
+  {max:4000, label:'3 – 4 kg'},
+  {max:5000, label:'4 – 5 kg'},
+  {max:9000, label:'5 – 9 kg'},
+  {max:13000,label:'9 – 13 kg'},
+  {max:17000,label:'13 – 17 kg'},
+  {max:23000,label:'17 – 23 kg'},
+  {max:30000,label:'23 – 30 kg'},
+  {max:Infinity,label:'acima de 30 kg'},
+];
+// Valores cheios (antes do desconto por reputação). Referência 2026; ajuste no painel.
+const DEFAULT_TABLE = [
+  //  19–28  29–49  50–78  79–99  100–119 120–149 150–199 200+
+  [ 6.00,  6.50,  6.75, 24.70, 27.00, 29.50, 32.50, 36.00],
+  [ 6.25,  6.75,  7.00, 26.70, 29.00, 31.50, 34.50, 38.00],
+  [ 6.75,  7.25,  7.50, 29.70, 32.00, 34.50, 37.50, 41.00],
+  [ 7.75,  8.25,  8.75, 33.70, 36.00, 38.50, 41.50, 45.00],
+  [ 9.00,  9.50, 10.00, 38.70, 41.00, 43.50, 46.50, 50.00],
+  [10.25, 10.75, 11.25, 43.70, 46.00, 48.50, 51.50, 55.00],
+  [11.50, 12.00, 12.50, 48.70, 51.00, 53.50, 56.50, 60.00],
+  [14.50, 15.00, 15.50, 64.70, 67.00, 69.50, 72.50, 76.00],
+  [18.00, 18.50, 19.00, 84.70, 87.00, 89.50, 92.50, 96.00],
+  [22.00, 22.50, 23.00,104.70,107.00,109.50,112.50,116.00],
+  [27.00, 27.50, 28.00,129.70,132.00,134.50,137.50,141.00],
+  [33.00, 33.50, 34.00,159.70,162.00,164.50,167.50,171.00],
+  [40.00, 40.50, 41.00,199.70,202.00,204.50,207.50,211.00],
+];
+const DEFAULT_PARAMS = {
+  limiteFreteGratis: 79,
+  minTabela: 19,
+  regraBaixo: 50,
+  cubagem: 6000,
+  comClassico: 12,
+  comPremium: 17,
+  desc: {verde:50, amarela:40, laranja:0, nova:0},
+  table: DEFAULT_TABLE,
+};
+const PKEY='mlp-params-v1', IKEY='mlp-inputs-v1', TKEY='mlp-theme';
+
+function lsGet(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+let P = clone(DEFAULT_PARAMS);
+const savedP = lsGet(PKEY);
+if (savedP && savedP.table && savedP.table.length===DEFAULT_TABLE.length) P = Object.assign(clone(DEFAULT_PARAMS), savedP, {desc:Object.assign({}, DEFAULT_PARAMS.desc, savedP.desc||{})});
+
+/* ---------- Formatação ---------- */
+const fmtBRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const fmtPct = n => (isFinite(n)? n.toLocaleString('pt-BR',{maximumFractionDigits:1, minimumFractionDigits:1}) : '—') + '%';
+const brl = n => fmtBRL.format(Math.round(n*100)/100);
+const brlSigned = n => (n<0?'−':'') + brl(Math.abs(n));
+
+/* ---------- Leitura das entradas ---------- */
+const $ = id => document.getElementById(id);
+const num = (id, d=0) => { const v=parseFloat($(id).value); return isFinite(v)? v : d; };
+let tipo = 'classico';
+
+function readInputs(){
+  return {
+    custo: num('custo'), preco: num('preco'), tipo,
+    comissao: num('comissao'),
+    logistica: $('logistica').value,
+    peso: num('peso'), dimC: num('dimC'), dimL: num('dimL'), dimA: num('dimA'),
+    reputacao: $('reputacao').value,
+    ownShip: num('ownShip'), fullFee: num('fullFee'),
+    freteBaixo: $('freteBaixo').checked,
+    imposto: num('imposto'), ads: num('ads'), embalagem: num('embalagem'), outros: num('outros'),
+    margemAlvo: num('margemAlvo'),
+  };
+}
+
+/* ---------- Motor de cálculo ---------- */
+function billableWeight(I){
+  const cub = (I.dimC*I.dimL*I.dimA)/P.cubagem*1000; // gramas
+  return {real:I.peso, cubado:cub, faturavel:Math.max(I.peso, cub)};
+}
+function weightIdx(g){ for(let i=0;i<WEIGHT_BANDS.length;i++) if(g<=WEIGHT_BANDS[i].max) return i; return WEIGHT_BANDS.length-1; }
+function priceIdx(p){ for(let i=0;i<PRICE_BANDS.length;i++) if(p<=PRICE_BANDS[i].max) return i; return PRICE_BANDS.length-1; }
+function tableValue(price, g){
+  const wi = weightIdx(g), pi = priceIdx(Math.max(price, PRICE_BANDS[0].min));
+  return P.table[wi][pi];
+}
+function descontoRep(rep){ return (P.desc[rep]||0)/100; }
+
+function calc(price, I){
+  const bw = billableWeight(I);
+  const g = bw.faturavel;
+  const acimaLimite = price >= P.limiteFreteGratis;
+  const comissao = price * I.comissao/100;
+  const items = [];
+  const desc = descontoRep(I.reputacao);
+
+  // Custo por unidade / frete
+  let custoUnidade = 0, frete = 0, freteLabel = '', unidadeLabel = '';
+  const baixoTabela = price < P.minTabela;
+  const fullValue = tableValue(price, g);
+
+  if (I.logistica === 'me2' || I.logistica === 'full') {
+    if (acimaLimite) {
+      frete = fullValue * (1 - desc);
+      freteLabel = `Tabela ${brl(fullValue)} com ${Math.round(desc*100)}% de desconto (${repLabel(I.reputacao)}) · ${WEIGHT_BANDS[weightIdx(g)].label}`;
+    } else if (baixoTabela) {
+      custoUnidade = price * P.regraBaixo/100;
+      unidadeLabel = `Abaixo de ${brl(P.minTabela)}: ${P.regraBaixo}% do preço`;
+    } else {
+      custoUnidade = fullValue;
+      unidadeLabel = `Faixa ${PRICE_BANDS[priceIdx(price)].label} · ${WEIGHT_BANDS[weightIdx(g)].label}`;
+      if (I.freteBaixo) {
+        const base = P.table[weightIdx(g)][3];
+        frete = base * (1 - desc);
+        freteLabel = `Frete grátis opcional: tabela ${brl(base)} com ${Math.round(desc*100)}% de desconto`;
+      }
+    }
+  } else if (I.logistica === 'flex') {
+    if (!acimaLimite) {
+      custoUnidade = baixoTabela ? price*P.regraBaixo/100 : fullValue;
+      unidadeLabel = baixoTabela ? `Abaixo de ${brl(P.minTabela)}: ${P.regraBaixo}% do preço` : `Flex paga custo por unidade abaixo de ${brl(P.limiteFreteGratis)}`;
+    }
+    if (acimaLimite || I.freteBaixo) { frete = I.ownShip; freteLabel = 'Custo da sua entrega Flex'; }
+  } else { // proprio
+    if (!acimaLimite) {
+      custoUnidade = baixoTabela ? price*P.regraBaixo/100 : fullValue;
+      unidadeLabel = baixoTabela ? `Abaixo de ${brl(P.minTabela)}: ${P.regraBaixo}% do preço` : `Envio próprio paga custo por unidade abaixo de ${brl(P.limiteFreteGratis)}`;
+    }
+    if (acimaLimite || I.freteBaixo) { frete = I.ownShip; freteLabel = 'Seu transportador (frete grátis por sua conta)'; }
+  }
+  const fullFee = I.logistica === 'full' ? I.fullFee : 0;
+  const imposto = price * I.imposto/100;
+  const ads = price * I.ads/100;
+
+  items.push({k:'produto', nome:'Custo do produto', como:'valor informado', v:I.custo});
+  items.push({k:'comissao', nome:`Comissão ${I.tipo==='premium'?'Premium':'Clássico'}`, como:`${I.comissao}% × preço`, v:comissao});
+  if (custoUnidade>0) items.push({k:'logistica', nome:'Custo por unidade', como:unidadeLabel, v:custoUnidade});
+  if (frete>0) items.push({k:'logistica', nome:'Frete', como:freteLabel, v:frete});
+  if (fullFee>0) items.push({k:'logistica', nome:'Operação Full', como:'valor informado por unidade', v:fullFee});
+  items.push({k:'imposto', nome:'Impostos', como:`${I.imposto}% × preço`, v:imposto});
+  if (ads>0) items.push({k:'outros', nome:'Ads', como:`${I.ads}% × preço`, v:ads});
+  if (I.embalagem>0) items.push({k:'outros', nome:'Embalagem', como:'valor informado', v:I.embalagem});
+  if (I.outros>0) items.push({k:'outros', nome:'Outros custos', como:'valor informado', v:I.outros});
+
+  const tarifasML = comissao + custoUnidade + (I.logistica==='me2'||I.logistica==='full' ? frete : 0) + fullFee;
+  const logistica = custoUnidade + frete + fullFee;
+  const total = items.reduce((s,i)=>s+i.v,0);
+  const lucro = price - total;
+  return {price, items, comissao, custoUnidade, frete, fullFee, imposto, ads, logistica, tarifasML,
+    outros: ads + I.embalagem + I.outros, total, lucro,
+    margem: price>0 ? lucro/price*100 : NaN, markup: I.custo>0 ? lucro/I.custo*100 : NaN,
+    repasse: price - tarifasML, bw};
+}
+function repLabel(r){ return {verde:'verde', amarela:'amarela', laranja:'laranja/vermelha', nova:'sem reputação'}[r]||r; }
+
+// Menor preço cuja margem líquida atinge o alvo (varredura fina por causa dos degraus).
+function solvePrice(I, alvoPct){
+  const lo = Math.max(0.5, I.custo), hi = Math.max(lo*12, lo+500);
+  let step = 0.05;
+  for (let p = Math.ceil(lo/step)*step; p <= hi; p += step) {
+    const r = calc(p, I);
+    if (r.lucro >= p*alvoPct/100 - 1e-9) {
+      // refina para o centavo
+      for (let q = Math.max(lo, p-step); q <= p+1e-9; q += 0.01) {
+        const rr = calc(q, I);
+        if (rr.lucro >= q*alvoPct/100 - 1e-9) return Math.round(q*100)/100;
+      }
+      return Math.round(p*100)/100;
+    }
+  }
+  return NaN;
+}
+
+/* ---------- Render ---------- */
+const COLORS = {produto:'var(--s-produto)', comissao:'var(--s-comissao)', logistica:'var(--s-logistica)', imposto:'var(--s-imposto)', outros:'var(--s-outros)', lucro:'var(--s-lucro)'};
+const NAMES = {produto:'Produto', comissao:'Comissão', logistica:'Logística', imposto:'Impostos', outros:'Ads e outros', lucro:'Lucro'};
+const ICON_OK = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg>';
+const ICON_WARN = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v5M6 9.5v.5"/></svg>';
+const ICON_BAD = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l6 6M9 3l-6 6"/></svg>';
+
+function render(){
+  const I = readInputs();
+  lsSet(IKEY, Object.assign({}, I));
+  const R = calc(I.preco, I);
+
+  // hints
+  const bw = R.bw;
+  $('pesoHint').textContent = `Peso cubado ${Math.round(bw.cubado)} g · faturável ${Math.round(bw.faturavel)} g (${WEIGHT_BANDS[weightIdx(bw.faturavel)].label})`;
+  $('precoHint').textContent = I.preco >= P.limiteFreteGratis
+    ? `Acima de ${brl(P.limiteFreteGratis)}: frete grátis obrigatório, você paga o envio com desconto por reputação.`
+    : `Abaixo de ${brl(P.limiteFreteGratis)}: comprador paga o frete; você paga o custo por unidade.`;
+
+  // hero
+  $('hLucro').textContent = brlSigned(R.lucro);
+  $('hMargem').textContent = fmtPct(R.margem);
+  $('hMarkup').textContent = fmtPct(R.markup);
+  $('hRepasse').textContent = brl(R.repasse);
+  const pill = $('hPill');
+  if (R.lucro < 0) { pill.className='pill bad'; pill.innerHTML = ICON_BAD+' Prejuízo por venda'; }
+  else if (R.margem < I.margemAlvo) { pill.className='pill warn'; pill.innerHTML = ICON_WARN+` Abaixo da meta de ${I.margemAlvo}%`; }
+  else { pill.className='pill good'; pill.innerHTML = ICON_OK+` Atinge a meta de ${I.margemAlvo}%`; }
+
+  // stack + legend
+  const groups = {produto:0, comissao:0, logistica:0, imposto:0, outros:0};
+  R.items.forEach(it => groups[it.k] += it.v);
+  const segs = Object.keys(groups).map(k=>({k, v:groups[k]}));
+  segs.push({k:'lucro', v:Math.max(0,R.lucro)});
+  const base = Math.max(I.preco, R.total, 0.01);
+  $('stack').innerHTML = segs.filter(s=>s.v>0).map(s=>`<span style="flex:${s.v/base};background:${COLORS[s.k]}" title="${NAMES[s.k]}: ${brl(s.v)}"></span>`).join('');
+  $('legend').innerHTML = segs.filter(s=>s.v>0||s.k==='lucro').map(s=>`<span><i style="background:${COLORS[s.k]}"></i>${NAMES[s.k]} <b class="num">${fmtPct(I.preco>0? s.v/I.preco*100 : NaN)}</b></span>`).join('');
+  $('stackTotal').textContent = R.lucro<0 ? `custos passam do preço em ${brl(-R.lucro)}` : `preço ${brl(I.preco)}`;
+
+  // breakdown table
+  const tb = $('breakdown').querySelector('tbody');
+  const rows = R.items.map(it=>`<tr><td><span class="sw" style="background:${COLORS[it.k]}"></span>${it.nome}</td><td class="sub">${it.como}</td><td class="r num">− ${brl(it.v)}</td><td class="r num">${fmtPct(I.preco>0? it.v/I.preco*100 : NaN)}</td></tr>`);
+  rows.unshift(`<tr><td>Preço de venda</td><td class="sub">valor informado</td><td class="r num">${brl(I.preco)}</td><td class="r num">100,0%</td></tr>`);
+  rows.push(`<tr class="total"><td><span class="sw" style="background:${COLORS.lucro}"></span>Lucro líquido</td><td class="sub">preço − todos os custos</td><td class="r num ${R.lucro<0?'neg':'pos'}">${brlSigned(R.lucro)}</td><td class="r num ${R.lucro<0?'neg':'pos'}">${fmtPct(R.margem)}</td></tr>`);
+  tb.innerHTML = rows.join('');
+
+  // reference prices
+  const be = solvePrice(I, 0);
+  const alvo = solvePrice(I, I.margemAlvo);
+  $('cBreakeven').textContent = isFinite(be)? brl(be) : '—';
+  $('cAlvoLabel').textContent = `Preço para ${I.margemAlvo}% de margem`;
+  $('cAlvo').textContent = isFinite(alvo)? brl(alvo) : '—';
+  $('cAlvoD').textContent = isFinite(alvo)
+    ? (alvo <= I.preco ? `seu preço atual já cobre a meta (${brl(I.preco - alvo)} acima)` : `precisa subir ${brl(alvo - I.preco)} em relação ao preço atual`)
+    : 'nenhum preço até 12× o custo atinge a meta com estes custos';
+  const other = Object.assign({}, I, {tipo: I.tipo==='premium'?'classico':'premium', comissao: I.tipo==='premium'? P.comClassico : P.comPremium});
+  const RO = calc(I.preco, other);
+  const diff = RO.lucro - R.lucro;
+  $('cCompara').textContent = brlSigned(diff);
+  $('cComparaD').textContent = `${other.tipo==='premium'?'no Premium':'no Clássico'} (${other.comissao}%) o lucro seria ${brl(RO.lucro)}, ${diff>=0?'a mais':'a menos'} ${brl(Math.abs(diff))} por venda`;
+
+  // sensitivity
+  const st = $('sens').querySelector('tbody');
+  const pts = [];
+  for (let f=-25; f<=25; f+=5) pts.push(Math.round(I.preco*(1+f/100)*100)/100);
+  const lim = P.limiteFreteGratis;
+  if (I.preco*0.75 < lim-0.01 && I.preco*1.25 > lim) { pts.push(lim-0.01, lim); }
+  const uniq = [...new Set(pts.map(p=>p.toFixed(2)))].map(Number).sort((a,b)=>a-b);
+  const results = uniq.map(p=>calc(p,I));
+  const maxAbs = Math.max(1, ...results.map(r=>Math.abs(r.lucro)));
+  st.innerHTML = results.map(r=>{
+    const cur = Math.abs(r.price-I.preco)<0.005;
+    const w = Math.abs(r.lucro)/maxAbs*100;
+    return `<tr><td class="r num ${cur?'cur':''}">${brl(r.price)}</td><td class="r num">${brl(r.comissao + r.custoUnidade + ((I.logistica==='me2'||I.logistica==='full')?r.frete:0) + r.fullFee)}</td><td class="r num">${brl(r.logistica)}</td><td class="r num">${brl(r.imposto + r.outros)}</td><td class="r num ${r.lucro<0?'neg':'pos'}">${brlSigned(r.lucro)}</td><td class="r num ${r.lucro<0?'neg':'pos'}">${fmtPct(r.margem)}</td><td class="bar-cell"><i class="${r.lucro<0?'neg':''}" style="width:${w}%"></i></td></tr>`;
+  }).join('');
+
+  renderChart(I, R, alvo);
+}
+
+/* ---------- Gráfico: lucro × preço ---------- */
+function renderChart(I, R, alvo){
+  const W=560, H=260, m={t:16,r:16,b:34,l:56};
+  const iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const lo = Math.max(1, Math.min(I.preco*0.6, I.custo)), hi = Math.max(I.preco*1.5, I.custo*2.2, lo+20);
+  const N=220, data=[];
+  for (let i=0;i<=N;i++){ const p=lo+(hi-lo)*i/N; data.push({p, l:calc(p,I).lucro}); }
+  const lim=P.limiteFreteGratis;
+  if (lim>lo && lim<hi) { data.push({p:lim-0.001, l:calc(lim-0.001,I).lucro}, {p:lim, l:calc(lim,I).lucro}); data.sort((a,b)=>a.p-b.p); }
+  let yMin=Math.min(0,...data.map(d=>d.l)), yMax=Math.max(0,...data.map(d=>d.l));
+  const pad=(yMax-yMin)*0.08||1; yMin-=pad; yMax+=pad;
+  const x=p=>m.l+(p-lo)/(hi-lo)*iw, y=v=>m.t+ih-(v-yMin)/(yMax-yMin)*ih;
+  const ticksY=niceTicks(yMin,yMax,5), ticksX=niceTicks(lo,hi,6);
+  let path='', area='';
+  data.forEach((d,i)=>{ path += (i?'L':'M')+x(d.p).toFixed(1)+' '+y(d.l).toFixed(1)+' '; });
+  area = path + `L${x(data[data.length-1].p).toFixed(1)} ${y(0).toFixed(1)} L${x(data[0].p).toFixed(1)} ${y(0).toFixed(1)} Z`;
+  const cx=x(I.preco), cy=y(R.lucro);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Lucro líquido conforme o preço de venda">`;
+  ticksY.forEach(t=>{ svg+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/><text x="${m.l-8}" y="${(y(t)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--ink-3)">${t.toLocaleString('pt-BR')}</text>`; });
+  ticksX.forEach(t=>{ svg+=`<text x="${x(t).toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="11" fill="var(--ink-3)">R$ ${t.toLocaleString('pt-BR')}</text>`; });
+  svg+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" stroke="var(--axis)" stroke-width="1"/>`;
+  if (lim>lo && lim<hi) svg+=`<line x1="${x(lim).toFixed(1)}" x2="${x(lim).toFixed(1)}" y1="${m.t}" y2="${m.t+ih}" stroke="var(--axis)" stroke-width="1"/><text x="${(x(lim)+5).toFixed(1)}" y="${m.t+11}" font-size="10.5" fill="var(--ink-3)">frete grátis obrigatório</text>`;
+  if (isFinite(alvo) && alvo>lo && alvo<hi) svg+=`<circle cx="${x(alvo).toFixed(1)}" cy="${y(calc(alvo,I).lucro).toFixed(1)}" r="4" fill="var(--surface)" stroke="var(--ink-2)" stroke-width="1.5"/><text x="${x(alvo).toFixed(1)}" y="${(y(calc(alvo,I).lucro)-9).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">meta ${I.margemAlvo}%</text>`;
+  svg+=`<path d="${area}" fill="var(--s-lucro)" fill-opacity="0.10"/><path d="${path}" fill="none" stroke="var(--s-lucro)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  svg+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5" fill="var(--s-lucro)" stroke="var(--surface)" stroke-width="2"/>`;
+  svg+=`<text x="${cx.toFixed(1)}" y="${(cy-10).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">${brlSigned(R.lucro)}</text>`;
+  svg+=`<line id="xh" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="var(--ink-3)" stroke-width="1" opacity="0"/><circle id="xd" r="4" fill="var(--s-lucro)" stroke="var(--surface)" stroke-width="2" opacity="0"/>`;
+  svg+=`<rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent" id="hit"/></svg>`;
+  const c=$('chart'); const tip=$('tip'); tip.className='tip';
+  c.innerHTML = svg; c.appendChild(tip);
+  const s=c.querySelector('svg'), hit=c.querySelector('#hit'), xh=c.querySelector('#xh'), xd=c.querySelector('#xd');
+  hit.addEventListener('mousemove', e=>{
+    const rect=s.getBoundingClientRect(); const sx=(e.clientX-rect.left)*W/rect.width;
+    const p=lo+(sx-m.l)/iw*(hi-lo); const r=calc(p,I);
+    xh.setAttribute('x1',x(p)); xh.setAttribute('x2',x(p)); xh.setAttribute('opacity',1);
+    xd.setAttribute('cx',x(p)); xd.setAttribute('cy',y(r.lucro)); xd.setAttribute('opacity',1);
+    tip.textContent=`${brl(p)} → lucro ${brlSigned(r.lucro)} (${fmtPct(r.margem)})`;
+    tip.style.left=(x(p)*rect.width/W)+'px'; tip.style.top=(y(r.lucro)*rect.height/H)+'px'; tip.className='tip on';
+  });
+  hit.addEventListener('mouseleave', ()=>{ xh.setAttribute('opacity',0); xd.setAttribute('opacity',0); tip.className='tip'; });
+}
+function niceTicks(lo,hi,n){
+  const span=hi-lo, raw=span/n, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const norm=raw/mag; const step=(norm<1.5?1:norm<3?2:norm<7?5:10)*mag;
+  const out=[]; for(let v=Math.ceil(lo/step)*step; v<=hi+1e-9; v+=step) out.push(Math.round(v*100)/100); return out;
+}
+
+/* ---------- Painel de parâmetros ---------- */
+function renderParams(){
+  $('pLimite').value=P.limiteFreteGratis; $('pMinTabela').value=P.minTabela; $('pRegraBaixo').value=P.regraBaixo; $('pCubagem').value=P.cubagem;
+  $('pComClassico').value=P.comClassico; $('pComPremium').value=P.comPremium;
+  $('pDescVerde').value=P.desc.verde; $('pDescAmarela').value=P.desc.amarela; $('pDescLaranja').value=P.desc.laranja; $('pDescNova').value=P.desc.nova;
+  const t=$('ptable');
+  t.querySelector('thead').innerHTML = '<tr><th class="w">Peso faturável</th>'+PRICE_BANDS.map(b=>`<th class="r">R$ ${b.label}</th>`).join('')+'</tr>';
+  t.querySelector('tbody').innerHTML = WEIGHT_BANDS.map((w,wi)=>`<tr><th class="w" scope="row">${w.label}</th>`+PRICE_BANDS.map((b,pi)=>`<td class="r"><input type="number" step="0.01" min="0" data-w="${wi}" data-p="${pi}" value="${P.table[wi][pi].toFixed(2)}" aria-label="${w.label}, ${b.label}"></td>`).join('')+'</tr>').join('');
+}
+function readParams(){
+  P.limiteFreteGratis=num('pLimite',79); P.minTabela=num('pMinTabela',19); P.regraBaixo=num('pRegraBaixo',50); P.cubagem=num('pCubagem',6000)||6000;
+  P.comClassico=num('pComClassico',12); P.comPremium=num('pComPremium',17);
+  P.desc={verde:num('pDescVerde'), amarela:num('pDescAmarela'), laranja:num('pDescLaranja'), nova:num('pDescNova')};
+  $('ptable').querySelectorAll('input').forEach(inp=>{ const v=parseFloat(inp.value); if(isFinite(v)) P.table[+inp.dataset.w][+inp.dataset.p]=v; });
+  lsSet(PKEY,P);
+}
+
+/* ---------- Eventos ---------- */
+function syncLogisticaFields(){
+  const l=$('logistica').value;
+  $('fOwnShip').hidden = !(l==='flex'||l==='proprio');
+  $('fFull').hidden = l!=='full';
+  $('reputacao').closest('.field').style.opacity = (l==='me2'||l==='full') ? '' : '.55';
+}
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+  tipo=b.dataset.tipo;
+  document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
+  $('comissao').value = tipo==='premium'? P.comPremium : P.comClassico;
+  render();
+}));
+document.querySelectorAll('.form input, .form select').forEach(el=>el.addEventListener('input',()=>{ syncLogisticaFields(); render(); }));
+$('params').addEventListener('input', e=>{ if(e.target.matches('input')){ readParams(); render(); } });
+$('btnRestore').addEventListener('click',()=>{ P=clone(DEFAULT_PARAMS); lsSet(PKEY,P); renderParams(); render(); });
+$('btnReset').addEventListener('click',()=>{ try{localStorage.removeItem(IKEY);}catch(e){} location.reload(); });
+$('btnTheme').addEventListener('click',()=>{
+  const root=document.documentElement; const cur=root.getAttribute('data-theme');
+  const sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const next = cur ? (cur==='dark'?'light':'dark') : (sysDark?'light':'dark');
+  root.setAttribute('data-theme',next); lsSet(TKEY,next);
+});
+
+/* ---------- Início ---------- */
+(function init(){
+  const th=lsGet(TKEY); if(th==='dark'||th==='light') document.documentElement.setAttribute('data-theme',th);
+  const saved=lsGet(IKEY);
+  if (saved){
+    ['custo','preco','comissao','peso','dimC','dimL','dimA','ownShip','fullFee','imposto','ads','embalagem','outros','margemAlvo'].forEach(k=>{ if(saved[k]!==undefined) $(k).value=saved[k]; });
+    if (saved.logistica) $('logistica').value=saved.logistica;
+    if (saved.reputacao) $('reputacao').value=saved.reputacao;
+    $('freteBaixo').checked=!!saved.freteBaixo;
+    if (saved.tipo){ tipo=saved.tipo; document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed', x.dataset.tipo===tipo?'true':'false')); }
+  }
+  renderParams(); syncLogisticaFields(); render();
+})();
+})();
+</script>
+</body>
+</html>
