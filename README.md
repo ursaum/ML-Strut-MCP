@@ -14,7 +14,8 @@ Arquivo único, sem build: abra `index.html` no navegador.
 | Peso faturável | Maior valor entre peso real e peso cubado (C × L × A ÷ 6000) |
 | Full, Flex e envio próprio | Custo operacional do Full por unidade ou custo real da sua entrega |
 | Impostos | % sobre o preço (Simples Nacional ou carga efetiva) |
-| Ads, embalagem, outros | % do preço ou valor fixo por pedido |
+| Ads, afiliados, devoluções e perdas | % sobre o preço |
+| Embalagem, outros | valor fixo por pedido |
 
 Saídas: lucro líquido, margem, markup, repasse do Mercado Livre, composição do preço, ponto de equilíbrio, preço sugerido para a margem desejada, comparação Clássico × Premium, simulação de −25% a +25% e o gráfico de lucro × preço com o degrau dos R$ 79.
 

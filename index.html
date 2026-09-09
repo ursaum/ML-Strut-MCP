@@ -265,6 +265,18 @@ details.params[open] summary::after{content:"Fechar"}
         </div>
         <div class="row2">
           <div class="field">
+            <label for="afiliados">Custo de afiliados</label>
+            <div class="control"><input id="afiliados" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="0"><span class="suf">%</span></div>
+            <span class="hint">Comissão paga a afiliados, sobre o preço.</span>
+          </div>
+          <div class="field">
+            <label for="perdas">Devoluções e perdas</label>
+            <div class="control"><input id="perdas" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="0"><span class="suf">%</span></div>
+            <span class="hint">Estimativa de trocas, devoluções e extravios, sobre o preço.</span>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
             <label for="embalagem">Embalagem</label>
             <div class="control"><span class="pre">R$</span><input id="embalagem" type="number" min="0" step="0.01" inputmode="decimal" value="1.50"></div>
           </div>
@@ -469,7 +481,7 @@ function readInputs(){
     reputacao: $('reputacao').value,
     ownShip: num('ownShip'), fullFee: num('fullFee'),
     freteBaixo: $('freteBaixo').checked,
-    imposto: num('imposto'), ads: num('ads'), embalagem: num('embalagem'), outros: num('outros'),
+    imposto: num('imposto'), ads: num('ads'), afiliados: num('afiliados'), perdas: num('perdas'), embalagem: num('embalagem'), outros: num('outros'),
     margemAlvo: num('margemAlvo'),
   };
 }
@@ -532,6 +544,8 @@ function calc(price, I){
   const fullFee = I.logistica === 'full' ? I.fullFee : 0;
   const imposto = price * I.imposto/100;
   const ads = price * I.ads/100;
+  const afiliados = price * I.afiliados/100;
+  const perdas = price * I.perdas/100;
 
   items.push({k:'produto', nome:'Custo do produto', como:'valor informado', v:I.custo});
   items.push({k:'comissao', nome:`Comissão ${I.tipo==='premium'?'Premium':'Clássico'}`, como:`${I.comissao}% × preço`, v:comissao});
@@ -540,6 +554,8 @@ function calc(price, I){
   if (fullFee>0) items.push({k:'logistica', nome:'Operação Full', como:'valor informado por unidade', v:fullFee});
   items.push({k:'imposto', nome:'Impostos', como:`${I.imposto}% × preço`, v:imposto});
   if (ads>0) items.push({k:'outros', nome:'Ads', como:`${I.ads}% × preço`, v:ads});
+  if (afiliados>0) items.push({k:'outros', nome:'Afiliados', como:`${I.afiliados}% × preço`, v:afiliados});
+  if (perdas>0) items.push({k:'outros', nome:'Devoluções e perdas', como:`${I.perdas}% × preço (estimativa)`, v:perdas});
   if (I.embalagem>0) items.push({k:'outros', nome:'Embalagem', como:'valor informado', v:I.embalagem});
   if (I.outros>0) items.push({k:'outros', nome:'Outros custos', como:'valor informado', v:I.outros});
 
@@ -547,8 +563,8 @@ function calc(price, I){
   const logistica = custoUnidade + frete + fullFee;
   const total = items.reduce((s,i)=>s+i.v,0);
   const lucro = price - total;
-  return {price, items, comissao, custoUnidade, frete, fullFee, imposto, ads, logistica, tarifasML,
-    outros: ads + I.embalagem + I.outros, total, lucro,
+  return {price, items, comissao, custoUnidade, frete, fullFee, imposto, ads, afiliados, perdas, logistica, tarifasML,
+    outros: ads + afiliados + perdas + I.embalagem + I.outros, total, lucro,
     margem: price>0 ? lucro/price*100 : NaN, markup: I.custo>0 ? lucro/I.custo*100 : NaN,
     repasse: price - tarifasML, bw};
 }
@@ -574,7 +590,7 @@ function solvePrice(I, alvoPct){
 
 /* ---------- Render ---------- */
 const COLORS = {produto:'var(--s-produto)', comissao:'var(--s-comissao)', logistica:'var(--s-logistica)', imposto:'var(--s-imposto)', outros:'var(--s-outros)', lucro:'var(--s-lucro)'};
-const NAMES = {produto:'Produto', comissao:'Comissão', logistica:'Logística', imposto:'Impostos', outros:'Ads e outros', lucro:'Lucro'};
+const NAMES = {produto:'Produto', comissao:'Comissão', logistica:'Logística', imposto:'Impostos', outros:'Ads, afiliados, perdas e outros', lucro:'Lucro'};
 const ICON_OK = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg>';
 const ICON_WARN = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v5M6 9.5v.5"/></svg>';
 const ICON_BAD = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l6 6M9 3l-6 6"/></svg>';
@@ -744,7 +760,7 @@ $('btnTheme').addEventListener('click',()=>{
   const th=lsGet(TKEY); if(th==='dark'||th==='light') document.documentElement.setAttribute('data-theme',th);
   const saved=lsGet(IKEY);
   if (saved){
-    ['custo','preco','comissao','peso','dimC','dimL','dimA','ownShip','fullFee','imposto','ads','embalagem','outros','margemAlvo'].forEach(k=>{ if(saved[k]!==undefined) $(k).value=saved[k]; });
+    ['custo','preco','comissao','peso','dimC','dimL','dimA','ownShip','fullFee','imposto','ads','afiliados','perdas','embalagem','outros','margemAlvo'].forEach(k=>{ if(saved[k]!==undefined) $(k).value=saved[k]; });
     if (saved.logistica) $('logistica').value=saved.logistica;
     if (saved.reputacao) $('reputacao').value=saved.reputacao;
     $('freteBaixo').checked=!!saved.freteBaixo;
