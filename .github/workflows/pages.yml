@@ -2,7 +2,7 @@ name: Publicar dashboard no GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, claude/mercado-livre-pricing-dashboard-ohua72]
   workflow_dispatch:
 
 permissions:
