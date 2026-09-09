@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Precificador Mercado Livre</title>
+<title>Precificador de Marketplaces</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -58,6 +58,20 @@ button,input,select{font:inherit;color:inherit}
 .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 28px 14px;border-bottom:1px solid var(--line);background:var(--surface)}
 .topbar .sub{color:var(--ink-2);margin-top:4px;max-width:64ch}
 .topbar .actions{display:flex;gap:8px;align-items:center}
+.tabs{display:flex;gap:4px;padding:0 28px;background:var(--surface);border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:transparent;padding:12px 14px 10px;cursor:pointer;font-weight:600;color:var(--ink-2);border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;align-items:center;gap:8px}
+.tabs button i{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--line-2)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button[aria-selected="true"] i{background:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+@media (max-width:960px){.tabs{padding:0 16px;overflow-x:auto}}
+.fs[data-ch]{display:none}
+.fs[data-ch].on{display:flex}
+.cmp{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:700px){.cmp{grid-template-columns:1fr}}
+.cmp .card.cur{border-color:var(--accent);background:var(--accent-soft)}
+.cmp .card .v.neg{color:var(--bad)}
+.ptable.tiers td input{width:84px}
 
 .layout{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:22px;padding:22px 28px 60px;max-width:1440px;margin:0 auto}
 @media (max-width:960px){.layout{grid-template-columns:1fr;padding:16px}}
@@ -164,15 +178,20 @@ details.params[open] summary::after{content:"Fechar"}
 
 <header class="topbar">
   <div>
-    <p class="eyebrow">Mercado Livre · Brasil · 2026</p>
-    <h1>Precificador Mercado Livre</h1>
-    <p class="sub">Informe o custo e o preço do item. O painel calcula comissão, custo por unidade, frete, impostos e demais custos, e mostra o lucro líquido por venda.</p>
+    <p class="eyebrow" id="chEyebrow">Mercado Livre · Brasil · 2026</p>
+    <h1>Precificador de Marketplaces</h1>
+    <p class="sub">Informe o custo e o preço do item. O painel calcula comissão, tarifas fixas, frete, impostos e demais custos de cada canal, e mostra o lucro líquido por venda.</p>
   </div>
   <div class="actions">
     <button class="btn sm" id="btnReset" type="button">Limpar entradas</button>
     <button class="btn sm" id="btnTheme" type="button" aria-label="Alternar tema">Tema</button>
   </div>
 </header>
+<nav class="tabs" role="tablist" aria-label="Canal de venda">
+  <button type="button" role="tab" data-ch="ml" aria-selected="true"><i></i>Mercado Livre</button>
+  <button type="button" role="tab" data-ch="shopee" aria-selected="false"><i></i>Shopee</button>
+  <button type="button" role="tab" data-ch="tiktok" aria-selected="false"><i></i>TikTok Shop</button>
+</nav>
 
 <main class="layout">
   <!-- ========== ENTRADAS ========== -->
@@ -189,6 +208,10 @@ details.params[open] summary::after{content:"Fechar"}
           <div class="control"><span class="pre">R$</span><input id="preco" type="number" min="0" step="0.01" inputmode="decimal" value="89.90"></div>
           <span class="hint" id="precoHint"></span>
         </div>
+      </div>
+
+      <div class="fs on" data-ch="ml">
+        <h3>Mercado Livre</h3>
         <div class="field">
           <label>Tipo de anúncio</label>
           <div class="seg" role="group" aria-label="Tipo de anúncio">
@@ -201,10 +224,6 @@ details.params[open] summary::after{content:"Fechar"}
           <div class="control"><input id="comissao" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="12"><span class="suf">%</span></div>
           <span class="hint">Clássico 10–14% · Premium 15–19%. Confira a sua categoria em Custos de venda.</span>
         </div>
-      </div>
-
-      <div class="fs">
-        <h3>Logística</h3>
         <div class="field">
           <label for="logistica">Modo de envio</label>
           <div class="control"><select id="logistica">
@@ -248,6 +267,35 @@ details.params[open] summary::after{content:"Fechar"}
           <span class="hint">Pegue o valor no relatório do Full. Deixe 0 se não souber.</span>
         </div>
         <label class="check" id="fFreteBaixo"><input id="freteBaixo" type="checkbox"> Oferecer frete grátis mesmo abaixo de R$&nbsp;79</label>
+      </div>
+
+      <div class="fs" data-ch="shopee">
+        <h3>Shopee</h3>
+        <div class="field">
+          <label>Comissão e tarifa fixa</label>
+          <span class="hint" id="shopeeHint"></span>
+          <span class="hint">Definidas pela faixa de preço da tabela oficial. Ajuste na seção Tabelas de tarifas.</span>
+        </div>
+        <div class="field">
+          <label for="shopeeEnvio">Custo de envio por sua conta</label>
+          <div class="control"><span class="pre">R$</span><input id="shopeeEnvio" type="number" min="0" step="0.01" inputmode="decimal" value="0"></div>
+          <span class="hint">Deixe 0 se o Programa de Frete Grátis cobre o envio. Use para cupom de frete próprio ou envio fora da Shopee.</span>
+        </div>
+      </div>
+
+      <div class="fs" data-ch="tiktok">
+        <h3>TikTok Shop</h3>
+        <div class="field">
+          <label>Comissão e tarifa fixa</label>
+          <span class="hint" id="tiktokHint"></span>
+          <span class="hint">Definidas pela faixa de preço da tabela oficial. Ajuste na seção Tabelas de tarifas.</span>
+        </div>
+        <label class="check"><input id="ttFrete" type="checkbox" checked> Participo do Programa de Frete Grátis (<span id="ttFretePct">6</span>% sobre o preço)</label>
+        <div class="field">
+          <label for="ttEnvio">Custo de envio por sua conta</label>
+          <div class="control"><span class="pre">R$</span><input id="ttEnvio" type="number" min="0" step="0.01" inputmode="decimal" value="0"></div>
+          <span class="hint">Deixe 0 se o envio é pela plataforma. Use para subsídio ou envio próprio.</span>
+        </div>
       </div>
 
       <div class="fs">
@@ -313,9 +361,9 @@ details.params[open] summary::after{content:"Fechar"}
         <p class="note">lucro ÷ custo do produto</p>
       </div>
       <div>
-        <p class="eyebrow">Você recebe do ML</p>
+        <p class="eyebrow" id="hRepasseLabel">Você recebe do Mercado Livre</p>
         <p class="mid num" id="hRepasse">R$ 0,00</p>
-        <p class="note">preço − tarifas do Mercado Livre</p>
+        <p class="note">preço − tarifas do canal</p>
       </div>
     </div>
 
@@ -340,12 +388,12 @@ details.params[open] summary::after{content:"Fechar"}
           <div class="cards">
             <div class="card"><p class="eyebrow">Ponto de equilíbrio</p><p class="v num" id="cBreakeven">—</p><p class="d">lucro zero: abaixo disso você paga para vender</p></div>
             <div class="card target"><p class="eyebrow" id="cAlvoLabel">Preço para 20% de margem</p><p class="v num" id="cAlvo">—</p><p class="d" id="cAlvoD">menor preço que atinge a margem desejada</p></div>
-            <div class="card"><p class="eyebrow">Clássico × Premium</p><p class="v num" id="cCompara">—</p><p class="d" id="cComparaD"></p></div>
+            <div class="card"><p class="eyebrow" id="cComparaLabel">Clássico × Premium</p><p class="v num" id="cCompara">—</p><p class="d" id="cComparaD"></p></div>
           </div>
         </div>
       </div>
       <div class="panel">
-        <div class="panel-h"><h2>Lucro conforme o preço</h2><span class="eyebrow">degrau dos R$ 79</span></div>
+        <div class="panel-h"><h2>Lucro conforme o preço</h2><span class="eyebrow" id="chartNote">degraus das faixas de tarifa</span></div>
         <div class="panel-b">
           <div class="chart" id="chart"><div class="tip" id="tip"></div></div>
         </div>
@@ -353,10 +401,15 @@ details.params[open] summary::after{content:"Fechar"}
     </div>
 
     <div class="panel">
+      <div class="panel-h"><h2>Lucro por canal ao mesmo preço</h2><span class="eyebrow">usa as entradas de cada aba</span></div>
+      <div class="panel-b"><div class="cmp" id="cmp"></div></div>
+    </div>
+
+    <div class="panel">
       <div class="panel-h"><h2>Simulação de preços</h2><span class="eyebrow">−25% a +25% do preço atual</span></div>
       <div class="panel-b scroll">
         <table class="tbl sens" id="sens">
-          <thead><tr><th class="r">Preço</th><th class="r">Tarifas ML</th><th class="r">Logística</th><th class="r">Impostos + outros</th><th class="r">Lucro</th><th class="r">Margem</th><th style="width:26%"></th></tr></thead>
+          <thead><tr><th class="r">Preço</th><th class="r">Tarifas do canal</th><th class="r">Logística</th><th class="r">Impostos + outros</th><th class="r">Lucro</th><th class="r">Margem</th><th style="width:26%"></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -365,7 +418,16 @@ details.params[open] summary::after{content:"Fechar"}
     <details class="panel params" id="params">
       <summary><span><h2 style="display:inline">Tabelas de tarifas</h2> <span class="eyebrow" style="margin-left:10px">editáveis · salvas neste navegador</span></span></summary>
       <div class="panel-b">
-        <div class="callout">Os valores abaixo são <strong>referências</strong> para 2026. Desde março de 2026 o Mercado Livre cobra um custo por unidade que varia por peso e faixa de preço, e acima de R$&nbsp;79 o frete grátis é obrigatório com desconto por reputação. Confira os valores exatos no <em>Simulador de custos</em> do seu painel e ajuste aqui. As edições ficam salvas neste navegador.</div>
+        <div class="callout">Os valores abaixo são <strong>referências</strong> para 2026 nos três canais. Confira sempre no painel de vendedor de cada plataforma e ajuste aqui; as edições ficam salvas neste navegador.</div>
+        <h3 style="margin-bottom:8px">Shopee · comissão por faixa de preço (desde março de 2026)</h3>
+        <div class="scroll" style="margin-bottom:18px"><table class="tbl ptable tiers" id="shopeeTiers"><thead><tr><th>Faixa de preço</th><th class="r">Comissão %</th><th class="r">Tarifa fixa por item (R$)</th></tr></thead><tbody></tbody></table></div>
+        <h3 style="margin-bottom:8px">TikTok Shop · comissão por faixa de preço (desde 15 de julho de 2026)</h3>
+        <div class="params-grid" style="margin-bottom:8px">
+          <div class="field"><label for="pTtFrete">Programa de Frete Grátis</label><div class="control"><input id="pTtFrete" type="number" step="0.5" min="0" max="100"><span class="suf">% do preço</span></div></div>
+        </div>
+        <div class="scroll" style="margin-bottom:18px"><table class="tbl ptable tiers" id="tiktokTiers"><thead><tr><th>Faixa de preço</th><th class="r">Comissão %</th><th class="r">Tarifa fixa por item (R$)</th></tr></thead><tbody></tbody></table></div>
+        <h3 style="margin-bottom:8px">Mercado Livre</h3>
+        <div class="callout">Desde março de 2026 o Mercado Livre cobra um custo por unidade que varia por peso e faixa de preço Desde março de 2026 o Mercado Livre cobra um custo por unidade que varia por peso e faixa de preço, e acima de R$&nbsp;79 o frete grátis é obrigatório com desconto por reputação. Confira os valores exatos no <em>Simulador de custos</em> do seu painel.</div>
         <div class="params-grid">
           <div class="field"><label for="pLimite">Limite do frete grátis obrigatório</label><div class="control"><span class="pre">R$</span><input id="pLimite" type="number" step="0.01" min="0"></div></div>
           <div class="field"><label for="pMinTabela">Preço mínimo para a tabela por peso</label><div class="control"><span class="pre">R$</span><input id="pMinTabela" type="number" step="0.01" min="0"></div></div>
@@ -392,7 +454,7 @@ details.params[open] summary::after{content:"Fechar"}
   </section>
 </main>
 
-<p class="footer">Comissão por categoria e tabelas de frete/custo por unidade mudam ao longo do ano. Este painel é uma ferramenta de apoio; o valor cobrado de fato aparece no detalhe da venda no Mercado Livre.</p>
+<p class="footer">Comissões, tarifas fixas e tabelas de frete mudam ao longo do ano em todos os canais. Este painel é uma ferramenta de apoio; o valor cobrado de fato aparece no detalhe da venda em cada plataforma.</p>
 
 <script>
 (function(){
@@ -442,24 +504,61 @@ const DEFAULT_TABLE = [
   [40.00, 40.50, 41.00,199.70,202.00,204.50,207.50,211.00],
 ];
 const DEFAULT_PARAMS = {
-  limiteFreteGratis: 79,
-  minTabela: 19,
-  regraBaixo: 50,
-  cubagem: 6000,
-  comClassico: 12,
-  comPremium: 17,
-  desc: {verde:50, amarela:40, laranja:0, nova:0},
-  table: DEFAULT_TABLE,
+  ml: {
+    limiteFreteGratis: 79, minTabela: 19, regraBaixo: 50, cubagem: 6000,
+    comClassico: 12, comPremium: 17,
+    desc: {verde:50, amarela:40, laranja:0, nova:0},
+    table: DEFAULT_TABLE,
+  },
+  shopee: {
+    // Tabela única por faixa de preço, Programa de Frete Grátis já embutido (março/2026)
+    tiers: [
+      {max:7.99,     pct:50, fixo:0,  label:'até R$ 7,99'},
+      {max:79.99,    pct:20, fixo:4,  label:'R$ 8 a 79,99'},
+      {max:99.99,    pct:14, fixo:16, label:'R$ 80 a 99,99'},
+      {max:199.99,   pct:14, fixo:20, label:'R$ 100 a 199,99'},
+      {max:Infinity, pct:14, fixo:26, label:'R$ 200 ou mais'},
+    ],
+  },
+  tiktok: {
+    // Vigente desde 15/07/2026
+    tiers: [
+      {max:49.99,    pct:10, fixo:0, label:'até R$ 49,99'},
+      {max:Infinity, pct:6,  fixo:6, label:'R$ 50 ou mais'},
+    ],
+    freteGratisPct: 6,
+  },
 };
-const PKEY='mlp-params-v1', IKEY='mlp-inputs-v1', TKEY='mlp-theme';
+const CHANNELS = {
+  ml:     {nome:'Mercado Livre', eyebrow:'Mercado Livre · Brasil · 2026'},
+  shopee: {nome:'Shopee',        eyebrow:'Shopee · Brasil · 2026'},
+  tiktok: {nome:'TikTok Shop',   eyebrow:'TikTok Shop · Brasil · 2026'},
+};
+const PKEY='mlp-params-v2', PKEY_OLD='mlp-params-v1', IKEY='mlp-inputs-v2', IKEY_OLD='mlp-inputs-v1', TKEY='mlp-theme';
 
 function lsGet(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
 let P = clone(DEFAULT_PARAMS);
-const savedP = lsGet(PKEY);
-if (savedP && savedP.table && savedP.table.length===DEFAULT_TABLE.length) P = Object.assign(clone(DEFAULT_PARAMS), savedP, {desc:Object.assign({}, DEFAULT_PARAMS.desc, savedP.desc||{})});
+(function loadParams(){
+  const v2 = lsGet(PKEY);
+  if (v2 && v2.ml && v2.shopee && v2.tiktok) {
+    P.ml = Object.assign(clone(DEFAULT_PARAMS.ml), v2.ml, {desc:Object.assign({}, DEFAULT_PARAMS.ml.desc, v2.ml.desc||{})});
+    if (!(v2.ml.table && v2.ml.table.length===DEFAULT_TABLE.length)) P.ml.table = clone(DEFAULT_TABLE);
+    if (v2.shopee.tiers && v2.shopee.tiers.length===DEFAULT_PARAMS.shopee.tiers.length) P.shopee.tiers = v2.shopee.tiers.map((t,i)=>Object.assign({}, DEFAULT_PARAMS.shopee.tiers[i], {pct:t.pct, fixo:t.fixo}));
+    if (v2.tiktok.tiers && v2.tiktok.tiers.length===DEFAULT_PARAMS.tiktok.tiers.length) P.tiktok.tiers = v2.tiktok.tiers.map((t,i)=>Object.assign({}, DEFAULT_PARAMS.tiktok.tiers[i], {pct:t.pct, fixo:t.fixo}));
+    if (isFinite(v2.tiktok.freteGratisPct)) P.tiktok.freteGratisPct = v2.tiktok.freteGratisPct;
+    return;
+  }
+  const v1 = lsGet(PKEY_OLD); // migra parâmetros do Mercado Livre da versão anterior
+  if (v1 && v1.table && v1.table.length===DEFAULT_TABLE.length) {
+    P.ml = Object.assign(clone(DEFAULT_PARAMS.ml), v1, {desc:Object.assign({}, DEFAULT_PARAMS.ml.desc, v1.desc||{})});
+  }
+})();
+// Infinity não sobrevive ao JSON: restaura os limites a partir dos padrões
+function fixInf(){ ['shopee','tiktok'].forEach(c=>P[c].tiers.forEach((t,i)=>{ t.max = DEFAULT_PARAMS[c].tiers[i].max; t.label = DEFAULT_PARAMS[c].tiers[i].label; })); }
+fixInf();
 
 /* ---------- Formatação ---------- */
 const fmtBRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
@@ -471,16 +570,19 @@ const brlSigned = n => (n<0?'−':'') + brl(Math.abs(n));
 const $ = id => document.getElementById(id);
 const num = (id, d=0) => { const v=parseFloat($(id).value); return isFinite(v)? v : d; };
 let tipo = 'classico';
+let channel = 'ml';
 
 function readInputs(){
   return {
-    custo: num('custo'), preco: num('preco'), tipo,
+    channel, custo: num('custo'), preco: num('preco'), tipo,
     comissao: num('comissao'),
     logistica: $('logistica').value,
     peso: num('peso'), dimC: num('dimC'), dimL: num('dimL'), dimA: num('dimA'),
     reputacao: $('reputacao').value,
     ownShip: num('ownShip'), fullFee: num('fullFee'),
     freteBaixo: $('freteBaixo').checked,
+    shopeeEnvio: num('shopeeEnvio'),
+    ttFrete: $('ttFrete').checked, ttEnvio: num('ttEnvio'),
     imposto: num('imposto'), ads: num('ads'), afiliados: num('afiliados'), perdas: num('perdas'), embalagem: num('embalagem'), outros: num('outros'),
     margemAlvo: num('margemAlvo'),
   };
@@ -488,28 +590,51 @@ function readInputs(){
 
 /* ---------- Motor de cálculo ---------- */
 function billableWeight(I){
-  const cub = (I.dimC*I.dimL*I.dimA)/P.cubagem*1000; // gramas
+  const cub = (I.dimC*I.dimL*I.dimA)/P.ml.cubagem*1000; // gramas
   return {real:I.peso, cubado:cub, faturavel:Math.max(I.peso, cub)};
 }
 function weightIdx(g){ for(let i=0;i<WEIGHT_BANDS.length;i++) if(g<=WEIGHT_BANDS[i].max) return i; return WEIGHT_BANDS.length-1; }
 function priceIdx(p){ for(let i=0;i<PRICE_BANDS.length;i++) if(p<=PRICE_BANDS[i].max) return i; return PRICE_BANDS.length-1; }
 function tableValue(price, g){
   const wi = weightIdx(g), pi = priceIdx(Math.max(price, PRICE_BANDS[0].min));
-  return P.table[wi][pi];
+  return P.ml.table[wi][pi];
 }
-function descontoRep(rep){ return (P.desc[rep]||0)/100; }
+function descontoRep(rep){ return (P.ml.desc[rep]||0)/100; }
+function repLabel(r){ return {verde:'verde', amarela:'amarela', laranja:'laranja/vermelha', nova:'sem reputação'}[r]||r; }
+function tierFor(tiers, price){ for (const t of tiers) if (price <= t.max) return t; return tiers[tiers.length-1]; }
 
-function calc(price, I){
+// Custos comuns a todos os canais (produto, impostos, ads, afiliados, perdas, embalagem, outros)
+function commonItems(price, I){
+  const imposto = price * I.imposto/100, ads = price * I.ads/100, afiliados = price * I.afiliados/100, perdas = price * I.perdas/100;
+  const items = [];
+  items.push({k:'imposto', nome:'Impostos', como:`${I.imposto}% × preço`, v:imposto});
+  if (ads>0) items.push({k:'outros', nome:'Ads', como:`${I.ads}% × preço`, v:ads});
+  if (afiliados>0) items.push({k:'outros', nome:'Afiliados', como:`${I.afiliados}% × preço`, v:afiliados});
+  if (perdas>0) items.push({k:'outros', nome:'Devoluções e perdas', como:`${I.perdas}% × preço (estimativa)`, v:perdas});
+  if (I.embalagem>0) items.push({k:'outros', nome:'Embalagem', como:'valor informado', v:I.embalagem});
+  if (I.outros>0) items.push({k:'outros', nome:'Outros custos', como:'valor informado', v:I.outros});
+  return {items, imposto, outros: ads + afiliados + perdas + I.embalagem + I.outros};
+}
+function finish(price, I, items, tarifasCanal, logistica, extra){
+  const c = commonItems(price, I);
+  const all = [{k:'produto', nome:'Custo do produto', como:'valor informado', v:I.custo}].concat(items, c.items);
+  const total = all.reduce((s,i)=>s+i.v,0);
+  const lucro = price - total;
+  return Object.assign({price, items: all, tarifasCanal, logistica, imposto: c.imposto, outros: c.outros, total, lucro,
+    margem: price>0 ? lucro/price*100 : NaN, markup: I.custo>0 ? lucro/I.custo*100 : NaN,
+    repasse: price - tarifasCanal}, extra||{});
+}
+
+function calcML(price, I){
   const bw = billableWeight(I);
   const g = bw.faturavel;
-  const acimaLimite = price >= P.limiteFreteGratis;
+  const M = P.ml;
+  const acimaLimite = price >= M.limiteFreteGratis;
   const comissao = price * I.comissao/100;
   const items = [];
   const desc = descontoRep(I.reputacao);
-
-  // Custo por unidade / frete
   let custoUnidade = 0, frete = 0, freteLabel = '', unidadeLabel = '';
-  const baixoTabela = price < P.minTabela;
+  const baixoTabela = price < M.minTabela;
   const fullValue = tableValue(price, g);
 
   if (I.logistica === 'me2' || I.logistica === 'full') {
@@ -517,58 +642,68 @@ function calc(price, I){
       frete = fullValue * (1 - desc);
       freteLabel = `Tabela ${brl(fullValue)} com ${Math.round(desc*100)}% de desconto (${repLabel(I.reputacao)}) · ${WEIGHT_BANDS[weightIdx(g)].label}`;
     } else if (baixoTabela) {
-      custoUnidade = price * P.regraBaixo/100;
-      unidadeLabel = `Abaixo de ${brl(P.minTabela)}: ${P.regraBaixo}% do preço`;
+      custoUnidade = price * M.regraBaixo/100;
+      unidadeLabel = `Abaixo de ${brl(M.minTabela)}: ${M.regraBaixo}% do preço`;
     } else {
       custoUnidade = fullValue;
       unidadeLabel = `Faixa ${PRICE_BANDS[priceIdx(price)].label} · ${WEIGHT_BANDS[weightIdx(g)].label}`;
       if (I.freteBaixo) {
-        const base = P.table[weightIdx(g)][3];
+        const base = M.table[weightIdx(g)][3];
         frete = base * (1 - desc);
         freteLabel = `Frete grátis opcional: tabela ${brl(base)} com ${Math.round(desc*100)}% de desconto`;
       }
     }
   } else if (I.logistica === 'flex') {
     if (!acimaLimite) {
-      custoUnidade = baixoTabela ? price*P.regraBaixo/100 : fullValue;
-      unidadeLabel = baixoTabela ? `Abaixo de ${brl(P.minTabela)}: ${P.regraBaixo}% do preço` : `Flex paga custo por unidade abaixo de ${brl(P.limiteFreteGratis)}`;
+      custoUnidade = baixoTabela ? price*M.regraBaixo/100 : fullValue;
+      unidadeLabel = baixoTabela ? `Abaixo de ${brl(M.minTabela)}: ${M.regraBaixo}% do preço` : `Flex paga custo por unidade abaixo de ${brl(M.limiteFreteGratis)}`;
     }
     if (acimaLimite || I.freteBaixo) { frete = I.ownShip; freteLabel = 'Custo da sua entrega Flex'; }
   } else { // proprio
     if (!acimaLimite) {
-      custoUnidade = baixoTabela ? price*P.regraBaixo/100 : fullValue;
-      unidadeLabel = baixoTabela ? `Abaixo de ${brl(P.minTabela)}: ${P.regraBaixo}% do preço` : `Envio próprio paga custo por unidade abaixo de ${brl(P.limiteFreteGratis)}`;
+      custoUnidade = baixoTabela ? price*M.regraBaixo/100 : fullValue;
+      unidadeLabel = baixoTabela ? `Abaixo de ${brl(M.minTabela)}: ${M.regraBaixo}% do preço` : `Envio próprio paga custo por unidade abaixo de ${brl(M.limiteFreteGratis)}`;
     }
     if (acimaLimite || I.freteBaixo) { frete = I.ownShip; freteLabel = 'Seu transportador (frete grátis por sua conta)'; }
   }
   const fullFee = I.logistica === 'full' ? I.fullFee : 0;
-  const imposto = price * I.imposto/100;
-  const ads = price * I.ads/100;
-  const afiliados = price * I.afiliados/100;
-  const perdas = price * I.perdas/100;
-
-  items.push({k:'produto', nome:'Custo do produto', como:'valor informado', v:I.custo});
   items.push({k:'comissao', nome:`Comissão ${I.tipo==='premium'?'Premium':'Clássico'}`, como:`${I.comissao}% × preço`, v:comissao});
   if (custoUnidade>0) items.push({k:'logistica', nome:'Custo por unidade', como:unidadeLabel, v:custoUnidade});
   if (frete>0) items.push({k:'logistica', nome:'Frete', como:freteLabel, v:frete});
   if (fullFee>0) items.push({k:'logistica', nome:'Operação Full', como:'valor informado por unidade', v:fullFee});
-  items.push({k:'imposto', nome:'Impostos', como:`${I.imposto}% × preço`, v:imposto});
-  if (ads>0) items.push({k:'outros', nome:'Ads', como:`${I.ads}% × preço`, v:ads});
-  if (afiliados>0) items.push({k:'outros', nome:'Afiliados', como:`${I.afiliados}% × preço`, v:afiliados});
-  if (perdas>0) items.push({k:'outros', nome:'Devoluções e perdas', como:`${I.perdas}% × preço (estimativa)`, v:perdas});
-  if (I.embalagem>0) items.push({k:'outros', nome:'Embalagem', como:'valor informado', v:I.embalagem});
-  if (I.outros>0) items.push({k:'outros', nome:'Outros custos', como:'valor informado', v:I.outros});
-
-  const tarifasML = comissao + custoUnidade + (I.logistica==='me2'||I.logistica==='full' ? frete : 0) + fullFee;
-  const logistica = custoUnidade + frete + fullFee;
-  const total = items.reduce((s,i)=>s+i.v,0);
-  const lucro = price - total;
-  return {price, items, comissao, custoUnidade, frete, fullFee, imposto, ads, afiliados, perdas, logistica, tarifasML,
-    outros: ads + afiliados + perdas + I.embalagem + I.outros, total, lucro,
-    margem: price>0 ? lucro/price*100 : NaN, markup: I.custo>0 ? lucro/I.custo*100 : NaN,
-    repasse: price - tarifasML, bw};
+  const tarifasCanal = comissao + custoUnidade + (I.logistica==='me2'||I.logistica==='full' ? frete : 0) + fullFee;
+  return finish(price, I, items, tarifasCanal, custoUnidade + frete + fullFee, {bw});
 }
-function repLabel(r){ return {verde:'verde', amarela:'amarela', laranja:'laranja/vermelha', nova:'sem reputação'}[r]||r; }
+
+function calcShopee(price, I){
+  const t = tierFor(P.shopee.tiers, price);
+  const comissao = price * t.pct/100;
+  const items = [{k:'comissao', nome:'Comissão Shopee', como:`${t.pct}% × preço · faixa ${t.label}`, v:comissao}];
+  if (t.fixo>0) items.push({k:'comissao', nome:'Tarifa fixa por item', como:`faixa ${t.label}`, v:t.fixo});
+  if (I.shopeeEnvio>0) items.push({k:'logistica', nome:'Envio por sua conta', como:'valor informado', v:I.shopeeEnvio});
+  return finish(price, I, items, comissao + t.fixo, I.shopeeEnvio, {tier:t});
+}
+
+function calcTikTok(price, I){
+  const t = tierFor(P.tiktok.tiers, price);
+  const comissao = price * t.pct/100;
+  const freteProg = I.ttFrete ? price * P.tiktok.freteGratisPct/100 : 0;
+  const items = [{k:'comissao', nome:'Comissão TikTok Shop', como:`${t.pct}% × preço · faixa ${t.label}`, v:comissao}];
+  if (t.fixo>0) items.push({k:'comissao', nome:'Tarifa fixa por item', como:`faixa ${t.label}`, v:t.fixo});
+  if (freteProg>0) items.push({k:'logistica', nome:'Programa de Frete Grátis', como:`${P.tiktok.freteGratisPct}% × preço`, v:freteProg});
+  if (I.ttEnvio>0) items.push({k:'logistica', nome:'Envio por sua conta', como:'valor informado', v:I.ttEnvio});
+  return finish(price, I, items, comissao + t.fixo + freteProg, freteProg + I.ttEnvio, {tier:t});
+}
+
+function calcFor(ch, price, I){ return ch==='shopee' ? calcShopee(price, I) : ch==='tiktok' ? calcTikTok(price, I) : calcML(price, I); }
+function calc(price, I){ return calcFor(I.channel, price, I); }
+
+// Degraus de tarifa de cada canal (para o gráfico e a simulação)
+function thresholds(ch){
+  if (ch==='ml') return [{p:P.ml.limiteFreteGratis, label:'frete grátis obrigatório'}];
+  const tiers = P[ch].tiers;
+  return tiers.slice(0,-1).map(t=>({p:Math.round((t.max+0.01)*100)/100, label:'faixa a partir de '+brl(Math.round((t.max+0.01)*100)/100)}));
+}
 
 // Menor preço cuja margem líquida atinge o alvo (varredura fina por causa dos degraus).
 function solvePrice(I, alvoPct){
@@ -577,7 +712,6 @@ function solvePrice(I, alvoPct){
   for (let p = Math.ceil(lo/step)*step; p <= hi; p += step) {
     const r = calc(p, I);
     if (r.lucro >= p*alvoPct/100 - 1e-9) {
-      // refina para o centavo
       for (let q = Math.max(lo, p-step); q <= p+1e-9; q += 0.01) {
         const rr = calc(q, I);
         if (rr.lucro >= q*alvoPct/100 - 1e-9) return Math.round(q*100)/100;
@@ -590,7 +724,7 @@ function solvePrice(I, alvoPct){
 
 /* ---------- Render ---------- */
 const COLORS = {produto:'var(--s-produto)', comissao:'var(--s-comissao)', logistica:'var(--s-logistica)', imposto:'var(--s-imposto)', outros:'var(--s-outros)', lucro:'var(--s-lucro)'};
-const NAMES = {produto:'Produto', comissao:'Comissão', logistica:'Logística', imposto:'Impostos', outros:'Ads, afiliados, perdas e outros', lucro:'Lucro'};
+const NAMES = {produto:'Produto', comissao:'Comissão e tarifas', logistica:'Logística', imposto:'Impostos', outros:'Ads, afiliados, perdas e outros', lucro:'Lucro'};
 const ICON_OK = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg>';
 const ICON_WARN = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2v5M6 9.5v.5"/></svg>';
 const ICON_BAD = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l6 6M9 3l-6 6"/></svg>';
@@ -599,25 +733,35 @@ function render(){
   const I = readInputs();
   lsSet(IKEY, Object.assign({}, I));
   const R = calc(I.preco, I);
+  const CH = CHANNELS[channel];
 
-  // hints
-  const bw = R.bw;
+  // dicas por canal
+  const bw = billableWeight(I);
   $('pesoHint').textContent = `Peso cubado ${Math.round(bw.cubado)} g · faturável ${Math.round(bw.faturavel)} g (${WEIGHT_BANDS[weightIdx(bw.faturavel)].label})`;
-  $('precoHint').textContent = I.preco >= P.limiteFreteGratis
-    ? `Acima de ${brl(P.limiteFreteGratis)}: frete grátis obrigatório, você paga o envio com desconto por reputação.`
-    : `Abaixo de ${brl(P.limiteFreteGratis)}: comprador paga o frete; você paga o custo por unidade.`;
+  if (channel==='ml') {
+    $('precoHint').textContent = I.preco >= P.ml.limiteFreteGratis
+      ? `Acima de ${brl(P.ml.limiteFreteGratis)}: frete grátis obrigatório, você paga o envio com desconto por reputação.`
+      : `Abaixo de ${brl(P.ml.limiteFreteGratis)}: comprador paga o frete; você paga o custo por unidade.`;
+  } else {
+    const t = R.tier;
+    $('precoHint').textContent = `Faixa ${t.label}: ${t.pct}% de comissão` + (t.fixo>0 ? ` + ${brl(t.fixo)} por item` : '') + (channel==='tiktok' && I.ttFrete ? ` + ${P.tiktok.freteGratisPct}% do Programa de Frete Grátis` : '') + '.';
+  }
+  const ts = tierFor(P.shopee.tiers, I.preco); $('shopeeHint').textContent = `Neste preço: ${ts.pct}%` + (ts.fixo>0?` + ${brl(ts.fixo)} por item`:'') + ` (faixa ${ts.label})`;
+  const tt = tierFor(P.tiktok.tiers, I.preco); $('tiktokHint').textContent = `Neste preço: ${tt.pct}%` + (tt.fixo>0?` + ${brl(tt.fixo)} por item`:'') + ` (faixa ${tt.label})`;
+  $('ttFretePct').textContent = P.tiktok.freteGratisPct;
 
   // hero
   $('hLucro').textContent = brlSigned(R.lucro);
   $('hMargem').textContent = fmtPct(R.margem);
   $('hMarkup').textContent = fmtPct(R.markup);
   $('hRepasse').textContent = brl(R.repasse);
+  $('hRepasseLabel').textContent = `Você recebe do ${CH.nome}`;
   const pill = $('hPill');
   if (R.lucro < 0) { pill.className='pill bad'; pill.innerHTML = ICON_BAD+' Prejuízo por venda'; }
   else if (R.margem < I.margemAlvo) { pill.className='pill warn'; pill.innerHTML = ICON_WARN+` Abaixo da meta de ${I.margemAlvo}%`; }
   else { pill.className='pill good'; pill.innerHTML = ICON_OK+` Atinge a meta de ${I.margemAlvo}%`; }
 
-  // stack + legend
+  // barra + legenda
   const groups = {produto:0, comissao:0, logistica:0, imposto:0, outros:0};
   R.items.forEach(it => groups[it.k] += it.v);
   const segs = Object.keys(groups).map(k=>({k, v:groups[k]}));
@@ -627,14 +771,14 @@ function render(){
   $('legend').innerHTML = segs.filter(s=>s.v>0||s.k==='lucro').map(s=>`<span><i style="background:${COLORS[s.k]}"></i>${NAMES[s.k]} <b class="num">${fmtPct(I.preco>0? s.v/I.preco*100 : NaN)}</b></span>`).join('');
   $('stackTotal').textContent = R.lucro<0 ? `custos passam do preço em ${brl(-R.lucro)}` : `preço ${brl(I.preco)}`;
 
-  // breakdown table
+  // tabela de composição
   const tb = $('breakdown').querySelector('tbody');
   const rows = R.items.map(it=>`<tr><td><span class="sw" style="background:${COLORS[it.k]}"></span>${it.nome}</td><td class="sub">${it.como}</td><td class="r num">− ${brl(it.v)}</td><td class="r num">${fmtPct(I.preco>0? it.v/I.preco*100 : NaN)}</td></tr>`);
   rows.unshift(`<tr><td>Preço de venda</td><td class="sub">valor informado</td><td class="r num">${brl(I.preco)}</td><td class="r num">100,0%</td></tr>`);
   rows.push(`<tr class="total"><td><span class="sw" style="background:${COLORS.lucro}"></span>Lucro líquido</td><td class="sub">preço − todos os custos</td><td class="r num ${R.lucro<0?'neg':'pos'}">${brlSigned(R.lucro)}</td><td class="r num ${R.lucro<0?'neg':'pos'}">${fmtPct(R.margem)}</td></tr>`);
   tb.innerHTML = rows.join('');
 
-  // reference prices
+  // preços de referência
   const be = solvePrice(I, 0);
   const alvo = solvePrice(I, I.margemAlvo);
   $('cBreakeven').textContent = isFinite(be)? brl(be) : '—';
@@ -643,25 +787,48 @@ function render(){
   $('cAlvoD').textContent = isFinite(alvo)
     ? (alvo <= I.preco ? `seu preço atual já cobre a meta (${brl(I.preco - alvo)} acima)` : `precisa subir ${brl(alvo - I.preco)} em relação ao preço atual`)
     : 'nenhum preço até 12× o custo atinge a meta com estes custos';
-  const other = Object.assign({}, I, {tipo: I.tipo==='premium'?'classico':'premium', comissao: I.tipo==='premium'? P.comClassico : P.comPremium});
-  const RO = calc(I.preco, other);
-  const diff = RO.lucro - R.lucro;
-  $('cCompara').textContent = brlSigned(diff);
-  $('cComparaD').textContent = `${other.tipo==='premium'?'no Premium':'no Clássico'} (${other.comissao}%) o lucro seria ${brl(RO.lucro)}, ${diff>=0?'a mais':'a menos'} ${brl(Math.abs(diff))} por venda`;
 
-  // sensitivity
+  // terceiro cartão: alternativa dentro do canal
+  if (channel==='ml') {
+    const other = Object.assign({}, I, {tipo: I.tipo==='premium'?'classico':'premium', comissao: I.tipo==='premium'? P.ml.comClassico : P.ml.comPremium});
+    const RO = calc(I.preco, other); const diff = RO.lucro - R.lucro;
+    $('cComparaLabel').textContent = 'Clássico × Premium';
+    $('cCompara').textContent = brlSigned(diff);
+    $('cComparaD').textContent = `${other.tipo==='premium'?'no Premium':'no Clássico'} (${other.comissao}%) o lucro seria ${brl(RO.lucro)}, ${diff>=0?'a mais':'a menos'} ${brl(Math.abs(diff))} por venda`;
+  } else if (channel==='tiktok') {
+    const other = Object.assign({}, I, {ttFrete: !I.ttFrete});
+    const RO = calc(I.preco, other); const diff = RO.lucro - R.lucro;
+    $('cComparaLabel').textContent = 'Programa de Frete Grátis';
+    $('cCompara').textContent = brlSigned(diff);
+    $('cComparaD').textContent = `${other.ttFrete?'participando':'fora'} do programa o lucro seria ${brl(RO.lucro)}, ${diff>=0?'a mais':'a menos'} ${brl(Math.abs(diff))} por venda`;
+  } else {
+    const next = P.shopee.tiers.find(t => I.preco <= t.max && t.max !== Infinity);
+    $('cComparaLabel').textContent = 'Próxima faixa de tarifa';
+    if (next) {
+      const p2 = Math.round((next.max+0.01)*100)/100, R2 = calc(p2, I);
+      $('cCompara').textContent = brl(p2);
+      $('cComparaD').textContent = `a partir daí ${tierFor(P.shopee.tiers,p2).pct}% + ${brl(tierFor(P.shopee.tiers,p2).fixo)}; lucro nesse preço ${brlSigned(R2.lucro)} (${fmtPct(R2.margem)})`;
+    } else { $('cCompara').textContent = '—'; $('cComparaD').textContent = 'você já está na última faixa'; }
+  }
+
+  // comparativo entre canais ao mesmo preço
+  $('cmp').innerHTML = Object.keys(CHANNELS).map(ch=>{
+    const r = calcFor(ch, I.preco, Object.assign({}, I, {channel:ch}));
+    return `<div class="card ${ch===channel?'cur':''}"><p class="eyebrow">${CHANNELS[ch].nome}</p><p class="v num ${r.lucro<0?'neg':''}">${brlSigned(r.lucro)}</p><p class="d">margem ${fmtPct(r.margem)} · tarifas do canal ${brl(r.tarifasCanal)}</p></div>`;
+  }).join('');
+
+  // simulação
   const st = $('sens').querySelector('tbody');
   const pts = [];
   for (let f=-25; f<=25; f+=5) pts.push(Math.round(I.preco*(1+f/100)*100)/100);
-  const lim = P.limiteFreteGratis;
-  if (I.preco*0.75 < lim-0.01 && I.preco*1.25 > lim) { pts.push(lim-0.01, lim); }
+  thresholds(channel).forEach(t=>{ if (I.preco*0.75 < t.p-0.01 && I.preco*1.25 > t.p) pts.push(Math.round((t.p-0.01)*100)/100, t.p); });
   const uniq = [...new Set(pts.map(p=>p.toFixed(2)))].map(Number).sort((a,b)=>a-b);
   const results = uniq.map(p=>calc(p,I));
   const maxAbs = Math.max(1, ...results.map(r=>Math.abs(r.lucro)));
   st.innerHTML = results.map(r=>{
     const cur = Math.abs(r.price-I.preco)<0.005;
     const w = Math.abs(r.lucro)/maxAbs*100;
-    return `<tr><td class="r num ${cur?'cur':''}">${brl(r.price)}</td><td class="r num">${brl(r.comissao + r.custoUnidade + ((I.logistica==='me2'||I.logistica==='full')?r.frete:0) + r.fullFee)}</td><td class="r num">${brl(r.logistica)}</td><td class="r num">${brl(r.imposto + r.outros)}</td><td class="r num ${r.lucro<0?'neg':'pos'}">${brlSigned(r.lucro)}</td><td class="r num ${r.lucro<0?'neg':'pos'}">${fmtPct(r.margem)}</td><td class="bar-cell"><i class="${r.lucro<0?'neg':''}" style="width:${w}%"></i></td></tr>`;
+    return `<tr><td class="r num ${cur?'cur':''}">${brl(r.price)}</td><td class="r num">${brl(r.tarifasCanal)}</td><td class="r num">${brl(r.logistica)}</td><td class="r num">${brl(r.imposto + r.outros)}</td><td class="r num ${r.lucro<0?'neg':'pos'}">${brlSigned(r.lucro)}</td><td class="r num ${r.lucro<0?'neg':'pos'}">${fmtPct(r.margem)}</td><td class="bar-cell"><i class="${r.lucro<0?'neg':''}" style="width:${w}%"></i></td></tr>`;
   }).join('');
 
   renderChart(I, R, alvo);
@@ -674,21 +841,22 @@ function renderChart(I, R, alvo){
   const lo = Math.max(1, Math.min(I.preco*0.6, I.custo)), hi = Math.max(I.preco*1.5, I.custo*2.2, lo+20);
   const N=220, data=[];
   for (let i=0;i<=N;i++){ const p=lo+(hi-lo)*i/N; data.push({p, l:calc(p,I).lucro}); }
-  const lim=P.limiteFreteGratis;
-  if (lim>lo && lim<hi) { data.push({p:lim-0.001, l:calc(lim-0.001,I).lucro}, {p:lim, l:calc(lim,I).lucro}); data.sort((a,b)=>a.p-b.p); }
+  const ths = thresholds(channel).filter(t=>t.p>lo && t.p<hi);
+  ths.forEach(t=>{ data.push({p:t.p-0.001, l:calc(t.p-0.001,I).lucro}, {p:t.p, l:calc(t.p,I).lucro}); });
+  data.sort((a,b)=>a.p-b.p);
   let yMin=Math.min(0,...data.map(d=>d.l)), yMax=Math.max(0,...data.map(d=>d.l));
   const pad=(yMax-yMin)*0.08||1; yMin-=pad; yMax+=pad;
   const x=p=>m.l+(p-lo)/(hi-lo)*iw, y=v=>m.t+ih-(v-yMin)/(yMax-yMin)*ih;
   const ticksY=niceTicks(yMin,yMax,5), ticksX=niceTicks(lo,hi,6);
-  let path='', area='';
+  let path='';
   data.forEach((d,i)=>{ path += (i?'L':'M')+x(d.p).toFixed(1)+' '+y(d.l).toFixed(1)+' '; });
-  area = path + `L${x(data[data.length-1].p).toFixed(1)} ${y(0).toFixed(1)} L${x(data[0].p).toFixed(1)} ${y(0).toFixed(1)} Z`;
+  const area = path + `L${x(data[data.length-1].p).toFixed(1)} ${y(0).toFixed(1)} L${x(data[0].p).toFixed(1)} ${y(0).toFixed(1)} Z`;
   const cx=x(I.preco), cy=y(R.lucro);
   let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Lucro líquido conforme o preço de venda">`;
   ticksY.forEach(t=>{ svg+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/><text x="${m.l-8}" y="${(y(t)+4).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--ink-3)">${t.toLocaleString('pt-BR')}</text>`; });
   ticksX.forEach(t=>{ svg+=`<text x="${x(t).toFixed(1)}" y="${H-10}" text-anchor="middle" font-size="11" fill="var(--ink-3)">R$ ${t.toLocaleString('pt-BR')}</text>`; });
   svg+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" stroke="var(--axis)" stroke-width="1"/>`;
-  if (lim>lo && lim<hi) svg+=`<line x1="${x(lim).toFixed(1)}" x2="${x(lim).toFixed(1)}" y1="${m.t}" y2="${m.t+ih}" stroke="var(--axis)" stroke-width="1"/><text x="${(x(lim)+5).toFixed(1)}" y="${m.t+11}" font-size="10.5" fill="var(--ink-3)">frete grátis obrigatório</text>`;
+  ths.forEach((t,i)=>{ svg+=`<line x1="${x(t.p).toFixed(1)}" x2="${x(t.p).toFixed(1)}" y1="${m.t}" y2="${m.t+ih}" stroke="var(--axis)" stroke-width="1"/>`; if (ths.length===1) svg+=`<text x="${(x(t.p)+5).toFixed(1)}" y="${m.t+11}" font-size="10.5" fill="var(--ink-3)">${t.label}</text>`; else svg+=`<text x="${(x(t.p)+4).toFixed(1)}" y="${m.t+11+(i%2)*12}" font-size="10" fill="var(--ink-3)">R$ ${t.p.toLocaleString('pt-BR')}</text>`; });
   if (isFinite(alvo) && alvo>lo && alvo<hi) svg+=`<circle cx="${x(alvo).toFixed(1)}" cy="${y(calc(alvo,I).lucro).toFixed(1)}" r="4" fill="var(--surface)" stroke="var(--ink-2)" stroke-width="1.5"/><text x="${x(alvo).toFixed(1)}" y="${(y(calc(alvo,I).lucro)-9).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="var(--ink-2)">meta ${I.margemAlvo}%</text>`;
   svg+=`<path d="${area}" fill="var(--s-lucro)" fill-opacity="0.10"/><path d="${path}" fill="none" stroke="var(--s-lucro)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   svg+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5" fill="var(--s-lucro)" stroke="var(--surface)" stroke-width="2"/>`;
@@ -707,6 +875,7 @@ function renderChart(I, R, alvo){
     tip.style.left=(x(p)*rect.width/W)+'px'; tip.style.top=(y(r.lucro)*rect.height/H)+'px'; tip.className='tip on';
   });
   hit.addEventListener('mouseleave', ()=>{ xh.setAttribute('opacity',0); xd.setAttribute('opacity',0); tip.className='tip'; });
+  $('chartNote').textContent = channel==='ml' ? 'degrau dos R$ 79' : 'degraus das faixas de tarifa';
 }
 function niceTicks(lo,hi,n){
   const span=hi-lo, raw=span/n, mag=Math.pow(10,Math.floor(Math.log10(raw)));
@@ -715,19 +884,29 @@ function niceTicks(lo,hi,n){
 }
 
 /* ---------- Painel de parâmetros ---------- */
+function tierRows(ch){
+  return P[ch].tiers.map((t,i)=>`<tr><th scope="row">${t.label}</th><td class="r"><input type="number" step="0.5" min="0" max="100" data-ch="${ch}" data-i="${i}" data-f="pct" value="${t.pct}" aria-label="${t.label}, comissão"></td><td class="r"><input type="number" step="0.01" min="0" data-ch="${ch}" data-i="${i}" data-f="fixo" value="${t.fixo.toFixed(2)}" aria-label="${t.label}, tarifa fixa"></td></tr>`).join('');
+}
 function renderParams(){
-  $('pLimite').value=P.limiteFreteGratis; $('pMinTabela').value=P.minTabela; $('pRegraBaixo').value=P.regraBaixo; $('pCubagem').value=P.cubagem;
-  $('pComClassico').value=P.comClassico; $('pComPremium').value=P.comPremium;
-  $('pDescVerde').value=P.desc.verde; $('pDescAmarela').value=P.desc.amarela; $('pDescLaranja').value=P.desc.laranja; $('pDescNova').value=P.desc.nova;
+  const M=P.ml;
+  $('pLimite').value=M.limiteFreteGratis; $('pMinTabela').value=M.minTabela; $('pRegraBaixo').value=M.regraBaixo; $('pCubagem').value=M.cubagem;
+  $('pComClassico').value=M.comClassico; $('pComPremium').value=M.comPremium;
+  $('pDescVerde').value=M.desc.verde; $('pDescAmarela').value=M.desc.amarela; $('pDescLaranja').value=M.desc.laranja; $('pDescNova').value=M.desc.nova;
   const t=$('ptable');
   t.querySelector('thead').innerHTML = '<tr><th class="w">Peso faturável</th>'+PRICE_BANDS.map(b=>`<th class="r">R$ ${b.label}</th>`).join('')+'</tr>';
-  t.querySelector('tbody').innerHTML = WEIGHT_BANDS.map((w,wi)=>`<tr><th class="w" scope="row">${w.label}</th>`+PRICE_BANDS.map((b,pi)=>`<td class="r"><input type="number" step="0.01" min="0" data-w="${wi}" data-p="${pi}" value="${P.table[wi][pi].toFixed(2)}" aria-label="${w.label}, ${b.label}"></td>`).join('')+'</tr>').join('');
+  t.querySelector('tbody').innerHTML = WEIGHT_BANDS.map((w,wi)=>`<tr><th class="w" scope="row">${w.label}</th>`+PRICE_BANDS.map((b,pi)=>`<td class="r"><input type="number" step="0.01" min="0" data-w="${wi}" data-p="${pi}" value="${M.table[wi][pi].toFixed(2)}" aria-label="${w.label}, ${b.label}"></td>`).join('')+'</tr>').join('');
+  $('shopeeTiers').querySelector('tbody').innerHTML = tierRows('shopee');
+  $('tiktokTiers').querySelector('tbody').innerHTML = tierRows('tiktok');
+  $('pTtFrete').value = P.tiktok.freteGratisPct;
 }
 function readParams(){
-  P.limiteFreteGratis=num('pLimite',79); P.minTabela=num('pMinTabela',19); P.regraBaixo=num('pRegraBaixo',50); P.cubagem=num('pCubagem',6000)||6000;
-  P.comClassico=num('pComClassico',12); P.comPremium=num('pComPremium',17);
-  P.desc={verde:num('pDescVerde'), amarela:num('pDescAmarela'), laranja:num('pDescLaranja'), nova:num('pDescNova')};
-  $('ptable').querySelectorAll('input').forEach(inp=>{ const v=parseFloat(inp.value); if(isFinite(v)) P.table[+inp.dataset.w][+inp.dataset.p]=v; });
+  const M=P.ml;
+  M.limiteFreteGratis=num('pLimite',79); M.minTabela=num('pMinTabela',19); M.regraBaixo=num('pRegraBaixo',50); M.cubagem=num('pCubagem',6000)||6000;
+  M.comClassico=num('pComClassico',12); M.comPremium=num('pComPremium',17);
+  M.desc={verde:num('pDescVerde'), amarela:num('pDescAmarela'), laranja:num('pDescLaranja'), nova:num('pDescNova')};
+  $('ptable').querySelectorAll('input').forEach(inp=>{ const v=parseFloat(inp.value); if(isFinite(v)) M.table[+inp.dataset.w][+inp.dataset.p]=v; });
+  document.querySelectorAll('#shopeeTiers input, #tiktokTiers input').forEach(inp=>{ const v=parseFloat(inp.value); if(isFinite(v)) P[inp.dataset.ch].tiers[+inp.dataset.i][inp.dataset.f]=v; });
+  P.tiktok.freteGratisPct = num('pTtFrete', 6);
   lsSet(PKEY,P);
 }
 
@@ -738,16 +917,24 @@ function syncLogisticaFields(){
   $('fFull').hidden = l!=='full';
   $('reputacao').closest('.field').style.opacity = (l==='me2'||l==='full') ? '' : '.55';
 }
+function setChannel(ch){
+  channel = ch;
+  document.querySelectorAll('.tabs [role=tab]').forEach(b=>b.setAttribute('aria-selected', b.dataset.ch===ch?'true':'false'));
+  document.querySelectorAll('.fs[data-ch]').forEach(f=>f.classList.toggle('on', f.dataset.ch===ch));
+  $('chEyebrow').textContent = CHANNELS[ch].eyebrow;
+  render();
+}
+document.querySelectorAll('.tabs [role=tab]').forEach(b=>b.addEventListener('click',()=>setChannel(b.dataset.ch)));
 document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
   tipo=b.dataset.tipo;
   document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
-  $('comissao').value = tipo==='premium'? P.comPremium : P.comClassico;
+  $('comissao').value = tipo==='premium'? P.ml.comPremium : P.ml.comClassico;
   render();
 }));
 document.querySelectorAll('.form input, .form select').forEach(el=>el.addEventListener('input',()=>{ syncLogisticaFields(); render(); }));
-$('params').addEventListener('input', e=>{ if(e.target.matches('input')){ readParams(); render(); } });
-$('btnRestore').addEventListener('click',()=>{ P=clone(DEFAULT_PARAMS); lsSet(PKEY,P); renderParams(); render(); });
-$('btnReset').addEventListener('click',()=>{ try{localStorage.removeItem(IKEY);}catch(e){} location.reload(); });
+$('params').addEventListener('input', e=>{ if(e.target.matches('input')){ readParams(); fixInf(); render(); } });
+$('btnRestore').addEventListener('click',()=>{ P=clone(DEFAULT_PARAMS); fixInf(); lsSet(PKEY,P); renderParams(); render(); });
+$('btnReset').addEventListener('click',()=>{ try{localStorage.removeItem(IKEY); localStorage.removeItem(IKEY_OLD);}catch(e){} location.reload(); });
 $('btnTheme').addEventListener('click',()=>{
   const root=document.documentElement; const cur=root.getAttribute('data-theme');
   const sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -758,15 +945,17 @@ $('btnTheme').addEventListener('click',()=>{
 /* ---------- Início ---------- */
 (function init(){
   const th=lsGet(TKEY); if(th==='dark'||th==='light') document.documentElement.setAttribute('data-theme',th);
-  const saved=lsGet(IKEY);
+  const saved=lsGet(IKEY) || lsGet(IKEY_OLD);
   if (saved){
-    ['custo','preco','comissao','peso','dimC','dimL','dimA','ownShip','fullFee','imposto','ads','afiliados','perdas','embalagem','outros','margemAlvo'].forEach(k=>{ if(saved[k]!==undefined) $(k).value=saved[k]; });
+    ['custo','preco','comissao','peso','dimC','dimL','dimA','ownShip','fullFee','shopeeEnvio','ttEnvio','imposto','ads','afiliados','perdas','embalagem','outros','margemAlvo'].forEach(k=>{ if(saved[k]!==undefined) $(k).value=saved[k]; });
     if (saved.logistica) $('logistica').value=saved.logistica;
     if (saved.reputacao) $('reputacao').value=saved.reputacao;
     $('freteBaixo').checked=!!saved.freteBaixo;
+    if (saved.ttFrete!==undefined) $('ttFrete').checked=!!saved.ttFrete;
     if (saved.tipo){ tipo=saved.tipo; document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed', x.dataset.tipo===tipo?'true':'false')); }
+    if (saved.channel && CHANNELS[saved.channel]) channel = saved.channel;
   }
-  renderParams(); syncLogisticaFields(); render();
+  renderParams(); syncLogisticaFields(); setChannel(channel);
 })();
 })();
 </script>
