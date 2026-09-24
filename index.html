@@ -208,6 +208,11 @@ details.params[open] summary::after{content:"Fechar"}
           <div class="control"><span class="pre">R$</span><input id="preco" type="number" min="0" step="0.01" inputmode="decimal" value="89.90"></div>
           <span class="hint" id="precoHint"></span>
         </div>
+        <div class="field">
+          <label for="desconto">Desconto de promoção</label>
+          <div class="control"><input id="desconto" type="number" min="0" max="99" step="0.5" inputmode="decimal" value="0"><span class="suf">%</span></div>
+          <span class="hint" id="descontoHint">Cupom, oferta relâmpago ou campanha. As tarifas incidem sobre o preço com desconto.</span>
+        </div>
       </div>
 
       <div class="fs on" data-ch="ml">
@@ -406,7 +411,7 @@ details.params[open] summary::after{content:"Fechar"}
     </div>
 
     <div class="panel">
-      <div class="panel-h"><h2>Simulação de preços</h2><span class="eyebrow">−25% a +25% do preço atual</span></div>
+      <div class="panel-h"><h2>Simulação de preços</h2><span class="eyebrow" id="sensNote">−25% a +25% do preço atual</span></div>
       <div class="panel-b scroll">
         <table class="tbl sens" id="sens">
           <thead><tr><th class="r">Preço</th><th class="r">Tarifas do canal</th><th class="r">Logística</th><th class="r">Impostos + outros</th><th class="r">Lucro</th><th class="r">Margem</th><th style="width:26%"></th></tr></thead>
@@ -574,7 +579,7 @@ let channel = 'ml';
 
 function readInputs(){
   return {
-    channel, custo: num('custo'), preco: num('preco'), tipo,
+    channel, custo: num('custo'), precoLista: num('preco'), desconto: Math.min(99, Math.max(0, num('desconto'))), preco: Math.round(num('preco') * (1 - Math.min(99, Math.max(0, num('desconto')))/100) * 100)/100, tipo,
     comissao: num('comissao'),
     logistica: $('logistica').value,
     peso: num('peso'), dimC: num('dimC'), dimL: num('dimL'), dimA: num('dimA'),
@@ -749,6 +754,7 @@ function render(){
   const ts = tierFor(P.shopee.tiers, I.preco); $('shopeeHint').textContent = `Neste preço: ${ts.pct}%` + (ts.fixo>0?` + ${brl(ts.fixo)} por item`:'') + ` (faixa ${ts.label})`;
   const tt = tierFor(P.tiktok.tiers, I.preco); $('tiktokHint').textContent = `Neste preço: ${tt.pct}%` + (tt.fixo>0?` + ${brl(tt.fixo)} por item`:'') + ` (faixa ${tt.label})`;
   $('ttFretePct').textContent = P.tiktok.freteGratisPct;
+  $('descontoHint').textContent = I.desconto>0 ? `Preço com desconto: ${brl(I.preco)} (${brl(I.precoLista - I.preco)} a menos). As tarifas incidem sobre esse valor.` : 'Cupom, oferta relâmpago ou campanha. As tarifas incidem sobre o preço com desconto.';
 
   // hero
   $('hLucro').textContent = brlSigned(R.lucro);
@@ -769,23 +775,31 @@ function render(){
   const base = Math.max(I.preco, R.total, 0.01);
   $('stack').innerHTML = segs.filter(s=>s.v>0).map(s=>`<span style="flex:${s.v/base};background:${COLORS[s.k]}" title="${NAMES[s.k]}: ${brl(s.v)}"></span>`).join('');
   $('legend').innerHTML = segs.filter(s=>s.v>0||s.k==='lucro').map(s=>`<span><i style="background:${COLORS[s.k]}"></i>${NAMES[s.k]} <b class="num">${fmtPct(I.preco>0? s.v/I.preco*100 : NaN)}</b></span>`).join('');
-  $('stackTotal').textContent = R.lucro<0 ? `custos passam do preço em ${brl(-R.lucro)}` : `preço ${brl(I.preco)}`;
+  $('stackTotal').textContent = R.lucro<0 ? `custos passam do preço em ${brl(-R.lucro)}` : (I.desconto>0 ? `preço com desconto ${brl(I.preco)}` : `preço ${brl(I.preco)}`);
 
   // tabela de composição
   const tb = $('breakdown').querySelector('tbody');
   const rows = R.items.map(it=>`<tr><td><span class="sw" style="background:${COLORS[it.k]}"></span>${it.nome}</td><td class="sub">${it.como}</td><td class="r num">− ${brl(it.v)}</td><td class="r num">${fmtPct(I.preco>0? it.v/I.preco*100 : NaN)}</td></tr>`);
-  rows.unshift(`<tr><td>Preço de venda</td><td class="sub">valor informado</td><td class="r num">${brl(I.preco)}</td><td class="r num">100,0%</td></tr>`);
+  if (I.desconto>0) {
+    rows.unshift(`<tr><td>Preço de venda com desconto</td><td class="sub">base das tarifas e da margem</td><td class="r num">${brl(I.preco)}</td><td class="r num">100,0%</td></tr>`);
+    rows.unshift(`<tr><td>Desconto de promoção</td><td class="sub">${I.desconto}% × preço do anúncio</td><td class="r num">− ${brl(I.precoLista - I.preco)}</td><td class="r num sub"></td></tr>`);
+    rows.unshift(`<tr><td>Preço do anúncio</td><td class="sub">valor informado</td><td class="r num">${brl(I.precoLista)}</td><td class="r num sub"></td></tr>`);
+  } else {
+    rows.unshift(`<tr><td>Preço de venda</td><td class="sub">valor informado</td><td class="r num">${brl(I.preco)}</td><td class="r num">100,0%</td></tr>`);
+  }
   rows.push(`<tr class="total"><td><span class="sw" style="background:${COLORS.lucro}"></span>Lucro líquido</td><td class="sub">preço − todos os custos</td><td class="r num ${R.lucro<0?'neg':'pos'}">${brlSigned(R.lucro)}</td><td class="r num ${R.lucro<0?'neg':'pos'}">${fmtPct(R.margem)}</td></tr>`);
   tb.innerHTML = rows.join('');
 
   // preços de referência
   const be = solvePrice(I, 0);
   const alvo = solvePrice(I, I.margemAlvo);
+  const lista = p => I.desconto>0 ? ` (anúncio ${brl(p/(1-I.desconto/100))})` : '';
   $('cBreakeven').textContent = isFinite(be)? brl(be) : '—';
+  document.querySelector('#cBreakeven + .d').textContent = 'lucro zero: abaixo disso você paga para vender' + lista(be);
   $('cAlvoLabel').textContent = `Preço para ${I.margemAlvo}% de margem`;
   $('cAlvo').textContent = isFinite(alvo)? brl(alvo) : '—';
   $('cAlvoD').textContent = isFinite(alvo)
-    ? (alvo <= I.preco ? `seu preço atual já cobre a meta (${brl(I.preco - alvo)} acima)` : `precisa subir ${brl(alvo - I.preco)} em relação ao preço atual`)
+    ? (alvo <= I.preco ? `seu preço atual já cobre a meta (${brl(I.preco - alvo)} acima)` : `precisa subir ${brl(alvo - I.preco)} em relação ao preço atual`) + lista(alvo)
     : 'nenhum preço até 12× o custo atinge a meta com estes custos';
 
   // terceiro cartão: alternativa dentro do canal
@@ -831,6 +845,7 @@ function render(){
     return `<tr><td class="r num ${cur?'cur':''}">${brl(r.price)}</td><td class="r num">${brl(r.tarifasCanal)}</td><td class="r num">${brl(r.logistica)}</td><td class="r num">${brl(r.imposto + r.outros)}</td><td class="r num ${r.lucro<0?'neg':'pos'}">${brlSigned(r.lucro)}</td><td class="r num ${r.lucro<0?'neg':'pos'}">${fmtPct(r.margem)}</td><td class="bar-cell"><i class="${r.lucro<0?'neg':''}" style="width:${w}%"></i></td></tr>`;
   }).join('');
 
+  $('sensNote').textContent = I.desconto>0 ? '−25% a +25% do preço com desconto' : '−25% a +25% do preço atual';
   renderChart(I, R, alvo);
 }
 
@@ -947,7 +962,7 @@ $('btnTheme').addEventListener('click',()=>{
   const th=lsGet(TKEY); if(th==='dark'||th==='light') document.documentElement.setAttribute('data-theme',th);
   const saved=lsGet(IKEY) || lsGet(IKEY_OLD);
   if (saved){
-    ['custo','preco','comissao','peso','dimC','dimL','dimA','ownShip','fullFee','shopeeEnvio','ttEnvio','imposto','ads','afiliados','perdas','embalagem','outros','margemAlvo'].forEach(k=>{ if(saved[k]!==undefined) $(k).value=saved[k]; });
+    ['custo','preco','desconto','comissao','peso','dimC','dimL','dimA','ownShip','fullFee','shopeeEnvio','ttEnvio','imposto','ads','afiliados','perdas','embalagem','outros','margemAlvo'].forEach(k=>{ if(saved[k]!==undefined) $(k).value=saved[k]; });
     if (saved.logistica) $('logistica').value=saved.logistica;
     if (saved.reputacao) $('reputacao').value=saved.reputacao;
     $('freteBaixo').checked=!!saved.freteBaixo;
